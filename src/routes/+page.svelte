@@ -58,18 +58,45 @@
 
 		// 记录网站访问
 		static recordVisit(siteUrl: string): void {
-			const counts = this.getVisitCounts();
-			counts[siteUrl] = (counts[siteUrl] || 0) + 1;
-			this.setVisitCounts(counts);
+			try {
+				const url = new URL(siteUrl);
+				console.log('记录访问: ', url);
+				
+				const counts = this.getVisitCounts();
+				counts[siteUrl] = (counts[siteUrl] || 0) + 1;
+				this.setVisitCounts(counts);
+			} catch (error) {
+				alert('无效的网站URL');
+			}
 		}
 
 		// 获取常用网站（按访问次数排序）
 		static getFrequentSites(allSites: Site[], limit: number = 6): Site[] {
 			const counts = this.getVisitCounts();
-			return allSites
+			const sites = allSites
 				.filter(site => counts[site.url] > 0)
 				.sort((a, b) => (counts[b.url] || 0) - (counts[a.url] || 0))
 				.slice(0, limit);
+			// 不在 allsites 列表中的网站,则手动添加
+			// 先找到不在 allsites 中的 url
+			// 然后再添加到 sites 列表中
+			const urls = Object.keys(counts).filter(url => !sites.some(site => site.url === url));
+			const newSites = urls.map(url => ({
+						title: new URL(url).hostname,
+						url,
+						favicon: `${url}/favicon.ico`,
+						description: '',
+						category: '',
+						tags: [],
+						ageRating: 'SFW',
+						language: 'en-US',
+						starred: false,
+						supportsPWA: false,
+						supportsHTTPS: true,
+						recommendation: '',
+						createdAt: ''
+					} as Site));
+			return [...sites, ...newSites];
 		}
 	}
 
@@ -170,6 +197,18 @@
 		// 保存到localStorage
 		LocalStorageManager.setStarredSites(userStarredSites);
 		console.log('更新后的收藏列表:', userStarredSites);
+	}
+
+	function handleAddFrequentUrl(url: string) {
+		if (!browser) return;
+
+		console.log(`添加常用网站: ${url}`);
+
+		// 记录访问
+		LocalStorageManager.recordVisit(url);
+
+		// 更新常用网站列表
+		userFrequentSites = LocalStorageManager.getFrequentSites(sites, 6);
 	}
 
 	// 记录网站访问
@@ -276,7 +315,8 @@
 			iconColor="text-orange-500"
 			onVisit={handleSiteVisit}
 			onRemove={removeSiteVisit}
-			maxItems={10}
+			onAdd={handleAddFrequentUrl}
+			maxItems={9}
 		/>
 
 		<!-- 用户收藏网站 -->

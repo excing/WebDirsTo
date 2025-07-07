@@ -9,6 +9,7 @@
 		iconColor?: string;
 		onVisit?: (site: Site) => void;
 		onRemove?: (site: Site) => void;
+		onAdd?: (url: string) => void;
 		maxItems?: number;
 		emptyMessage?: string;
 		showEmptyState?: boolean;
@@ -22,6 +23,7 @@
 		iconColor = 'text-gray-500',
 		onVisit, 
 		onRemove, 
+		onAdd,
 		maxItems,
 		emptyMessage = `暂无${title}`,
 		showEmptyState = false,
@@ -40,6 +42,13 @@
 		trending: "M23 6l-9.5 9.5-5-5L1 18",
 		bookmark: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
 	};
+
+	function onAddUrl() {
+		const url = prompt('请输入网站 URL:');
+		if (url) {
+			onAdd?.(url);
+		}
+	}
 </script>
 
 {#if displaySites.length > 0}
@@ -82,6 +91,19 @@
 					{showRemove}
 				/>
 			{/each}
+			{#if onAdd}
+				<button class="site-item relative group block" onclick={onAddUrl}>
+					<div  class="flex items-center px-1 py-3 rounded-lg transition-all duration-200
+						bg-white dark:bg-gray-800
+						hover:bg-gray-50 dark:hover:bg-gray-700
+						hover:shadow-md dark:hover:shadow-gray-900/50
+						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
+						border border-gray-200 dark:border-gray-700
+						hover:border-gray-300 dark:hover:border-gray-600 flex-col space-y-2">
+						<div class="relative overflow-hidden py-1 rounded-sm font-light text-center text-5xl text-gray-500 dark:text-gray-300">+</div>
+					</div>
+				</button>
+			{/if}
 		</div>
 		
 		<!-- 显示更多提示 -->
