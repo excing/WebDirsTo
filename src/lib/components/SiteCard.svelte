@@ -45,7 +45,7 @@
 					src={site.favicon}
 					alt="favicon"
 					fallback={getFallbackFavicon(site.url)}
-					class="w-5 h-5 mr-2 rounded-sm rounded-gray-800 bg-white dark:bg-white"
+					class="w-5 h-5 mr-2 rounded-sm"
 					loading="lazy"
 				/>
 				<a

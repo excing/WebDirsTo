@@ -59,7 +59,7 @@
                 src={site.favicon}
                 alt="favicon"
                 fallback={getFallbackFavicon(site.url)}
-                class="w-6 h-6 rounded-sm rounded-gray-800 bg-white dark:bg-white"
+                class="w-6 h-6 rounded-sm"
                 loading="lazy"
             />
             <!-- 标题仅显示一行,超出则。。。 -->
