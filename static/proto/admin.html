@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 探索导航</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <div class="min-h-screen flex flex-col items-center p-4">
+
+        <div class="w-full max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">管理后台</h1>
+                <p class="text-gray-600 dark:text-gray-400">管理导航网站内容</p>
+                <a href="index.html" class="text-blue-500 hover:underline mt-2 inline-block">&larr; 返回主页</a>
+            </div>
+
+            <!-- Admin Login Section (Conceptual) -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-4">管理员信息</h2>
+                <p>当前已登录为: <span class="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">admin</span> (此为示意)
+                </p>
+            </div>
+
+            <!-- Add New Site Section -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-4">添加新网站</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="site-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">网站
+                            URL</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <input type="url" id="site-url"
+                                class="flex-1 block w-full rounded-none rounded-l-md px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                placeholder="https://example.com">
+                            <button id="fetch-info-btn"
+                                class="inline-flex items-center px-4 py-2 border border-l-0 border-blue-600 rounded-r-md bg-blue-600 text-white hover:bg-blue-700">
+                                <span id="fetch-text">获取信息</span>
+                                <svg id="fetch-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="info-preview" class="hidden space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <!-- ... form content from previous version ... -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Submissions Section -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8">
+                <h2 class="text-xl font-bold mb-4">待审核的提交 (2)</h2>
+                <div class="space-y-4">
+                    <!-- Submission Item 1 -->
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+                            <div class="mb-4 md:mb-0 flex-1">
+                                <p class="font-bold text-lg">Vercel</p>
+                                <a href="https://vercel.com" target="_blank"
+                                    class="text-sm text-blue-500 hover:underline break-all">https://vercel.com</a>
+                                <div
+                                    class="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                                    <p><span class="font-semibold">IP:</span> 203.0.113.1</p>
+                                    <p><span class="font-semibold">Language:</span> en-US</p>
+                                    <p><span class="font-semibold">OS:</span> Windows</p>
+                                    <p><span class="font-semibold">Browser:</span> Chrome</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0 md:ml-4">
+                                <button
+                                    class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">批准</button>
+                                <button
+                                    class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">拒绝</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Site Data Management Section (NEW) -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-bold mb-4">网站数据管理</h2>
+                <div class="space-y-4">
+                    <!-- Site Item 1 -->
+                    <div
+                        class="site-item border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div class="mb-4 md:mb-0">
+                            <p class="font-bold">GitHub</p>
+                            <p class="text-sm text-gray-500">https://github.com</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button
+                                class="edit-btn px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">编辑</button>
+                            <button
+                                class="delete-btn px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">删除</button>
+                        </div>
+                    </div>
+                    <!-- Site Item 2 -->
+                    <div
+                        class="site-item border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div class="mb-4 md:mb-0">
+                            <p class="font-bold">Google</p>
+                            <p class="text-sm text-gray-500">https://google.com</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button
+                                class="edit-btn px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">编辑</button>
+                            <button
+                                class="delete-btn px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">删除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal (NEW) -->
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl z-10 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-xl font-semibold">编辑网站信息</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div><label class="block text-sm font-medium">标题</label><input type="text" id="edit-title"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                </div>
+                <div><label class="block text-sm font-medium">网址</label><input type="url" id="edit-url"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                </div>
+                <div><label class="block text-sm font-medium">Favicon URL</label><input type="url" id="edit-favicon"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                </div>
+                <div><label class="block text-sm font-medium">描述</label><textarea id="edit-desc" rows="2"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm"></textarea>
+                </div>
+                <div><label class="block text-sm font-medium">分类</label><input type="text" id="edit-category"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                </div>
+                <div><label class="block text-sm font-medium">标签 (逗号分隔)</label><input type="text" id="edit-tags"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                </div>
+                <div><label class="block text-sm font-medium">年龄分级</label><select id="edit-age"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm">
+                        <option>SFW</option>
+                        <option>18+</option>
+                    </select></div>
+                <div><label class="block text-sm font-medium">语言</label><input type="text" id="edit-lang"
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shadow-sm sm:text-sm"
+                        placeholder="e.g. zh-CN"></div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="flex items-center"><input id="edit-starred" type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><label
+                            for="edit-starred" class="ml-2 block text-sm">置顶</label></div>
+                    <div class="flex items-center"><input id="edit-pwa" type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><label
+                            for="edit-pwa" class="ml-2 block text-sm">支持 PWA</label></div>
+                    <div class="flex items-center"><input id="edit-https" type="checkbox"
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"><label
+                            for="edit-https" class="ml-2 block text-sm">支持 HTTPS</label></div>
+                </div>
+            </div>
+            <div
+                class="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+                <button id="cancel-edit-btn"
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">取消</button>
+                <button id="save-edit-btn"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">保存更改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Add Site Logic ---
+            const fetchBtn = document.getElementById('fetch-info-btn');
+            // ... (rest of the fetch logic is omitted for brevity)
+
+            // --- Site Management Logic (NEW) ---
+            const editModal = document.getElementById('edit-modal');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    // In a real app, you'd fetch the site's full data here
+                    // and populate the form fields.
+                    document.getElementById('edit-title').value = "示例标题";
+                    document.getElementById('edit-url').value = "https://example.com";
+                    // ... populate all other fields
+
+                    editModal.classList.remove('hidden');
+                    editModal.classList.add('flex');
+                });
+            });
+
+            function closeModal() {
+                editModal.classList.add('hidden');
+                editModal.classList.remove('flex');
+            }
+
+            cancelEditBtn.addEventListener('click', closeModal);
+            editModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    if (confirm('您确定要删除此网站吗？该操作会将其归档到 404.txt。')) {
+                        // In a real app, this would trigger an API call to the backend.
+                        e.target.closest('.site-item').remove();
+                        alert('网站已删除 (归档)。');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
