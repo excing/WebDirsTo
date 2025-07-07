@@ -61,7 +61,7 @@
 		</div>
 		<button
 			onclick={handleFavorite}
-			class="favorite-btn absolute top-2 right-2 p-2 bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+			class="favorite-btn absolute top-2 right-2 p-2 bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-300 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-10"
 			aria-label={isStarred ? '取消收藏' : '收藏网站'}
 		>
 			<svg

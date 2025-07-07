@@ -5,9 +5,9 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import PerformanceMonitor from '$lib/components/PerformanceMonitor.svelte';
+	import UserSiteSection from '$lib/components/UserSiteSection.svelte';
 	import type { Site } from '$lib/types.js';
 	import type { PageData } from './$types';
-    import SiteItem from '$lib/components/SiteItem.svelte';
 
 	// 本地存储管理类
 	class LocalStorageManager {
@@ -272,49 +272,25 @@
 		</section>
 	{:else}
 		<!-- 用户常用网站 -->
-		{#if userFrequentSites.length > 0}
-			<section class="mb-12">
-				<h2 class="text-2xl font-bold mb-4 flex items-center">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-orange-500">
-						<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-					</svg>
-					常用网站
-					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userFrequentSites.length})</span>
-				</h2>
-				<!-- 自动换行布局 -->
-				<div class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-6">
-					{#each userFrequentSites as site}
-						<SiteItem
-							{site}
-							onVisit={() => handleSiteVisit(site)}
-							onRemove={() => removeSiteVisit(site)}
-						/>
-					{/each}
-				</div>
-			</section>
-		{/if}
+		<UserSiteSection
+			sites={userFrequentSites}
+			title="常用网站"
+			icon="star"
+			iconColor="text-orange-500"
+			onVisit={handleSiteVisit}
+			onRemove={removeSiteVisit}
+			maxItems={2}
+		/>
 
 		<!-- 用户收藏网站 -->
-		{#if userStarredSiteObjects.length > 0}
-			<section class="mb-12">
-				<h2 class="text-2xl font-bold mb-4 flex items-center">
-					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-red-500">
-						<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-					</svg>
-					我的收藏
-					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userStarredSiteObjects.length})</span>
-				</h2>
-				<div class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-6">
-					{#each userStarredSiteObjects as site}
-						<SiteItem
-							{site}
-							onVisit={() => handleSiteVisit(site)}
-							onRemove={() => toggleStarred(site)}
-						/>
-					{/each}
-				</div>
-			</section>
-		{/if}
+		<UserSiteSection
+			sites={userStarredSiteObjects}
+			title="我的收藏"
+			icon="heart"
+			iconColor="text-red-500"
+			onVisit={handleSiteVisit}
+			onRemove={toggleStarred}
+		/>
 		<!-- 置顶推荐 - 服务端渲染 -->
 		{#if starredSites.length > 0}
 			<section class="mb-12">
