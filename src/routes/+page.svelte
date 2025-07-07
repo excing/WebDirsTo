@@ -60,7 +60,11 @@
 	}
 
 	function handleAdultContentToggle() {
+		console.log('handleAdultContentToggle');
+		
 		if (!browser) return;
+
+		console.log('showAdultContent: ', showAdultContent);
 
 		if (!showAdultContent) {
 			if (confirm('您确认已满18周岁，并希望显示成人内容吗？')) {
@@ -184,7 +188,7 @@
 					type="checkbox"
 					id="show-18plus"
 					class="rounded"
-					bind:checked={showAdultContent}
+					checked={showAdultContent}
 					onchange={handleAdultContentToggle}
 				/>
 				<label for="show-18plus">显示 18+ 内容</label>

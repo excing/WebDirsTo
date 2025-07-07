@@ -77,5 +77,20 @@ export const sampleSites: Site[] = [
 		supportsHTTPS: true,
 		recommendation: '保护隐私的搜索选择',
 		createdAt: '2025-07-06T12:04:00Z'
+	},
+	{
+		title: 'PornHub',
+		url: 'https://pornhub.com',
+		favicon: 'https://pornhub.com/favicon.ico',
+		description: '成人内容网站',
+		category: '成人',
+		tags: ['porn', 'adult', '18+'],
+		ageRating: '18+',
+		language: 'en-US',
+		starred: false,
+		supportsPWA: false,
+		supportsHTTPS: true,
+		recommendation: '成人内容网站',
+		createdAt: '2025-07-06T12:05:00Z'
 	}
 ];
