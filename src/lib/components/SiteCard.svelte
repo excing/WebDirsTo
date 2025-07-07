@@ -5,18 +5,27 @@
 	interface Props {
 		site: Site;
 		onFavorite?: (site: Site) => void;
+		onVisit?: (site: Site) => void;
+		isStarred?: boolean;
 		priority?: boolean; // 是否优先加载（置顶网站）
 	}
 
-	let { site, onFavorite, priority = false }: Props = $props();
-
-	let isFavorited = $state(false);
+	let { site, onFavorite, onVisit, isStarred = false, priority = false }: Props = $props();
 
 	function handleFavorite(event: Event) {
 		event.preventDefault();
 		event.stopPropagation();
-		isFavorited = !isFavorited;
 		onFavorite?.(site);
+	}
+
+	function handleVisit(event: Event) {
+		event.preventDefault();
+		if (onVisit) {
+			onVisit(site);
+		} else {
+			// 默认行为：直接打开链接
+			window.open(site.url, '_blank');
+		}
 	}
 
 	function getScreenshotUrl(url: string): string {
@@ -43,6 +52,7 @@
 				<a
 					href={site.url}
 					target="_blank"
+					onclick={handleVisit}
 					class="font-bold text-lg text-gray-900 dark:text-white stretched-link"
 				>
 					{site.title}
@@ -53,19 +63,19 @@
 		<button
 			onclick={handleFavorite}
 			class="favorite-btn absolute top-2 right-2 p-2 bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded-full text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-			aria-label={isFavorited ? '取消收藏' : '收藏网站'}
+			aria-label={isStarred ? '取消收藏' : '收藏网站'}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="20"
 				height="20"
 				viewBox="0 0 24 24"
-				fill={isFavorited ? 'currentColor' : 'none'}
+				fill={isStarred ? 'currentColor' : 'none'}
 				stroke="currentColor"
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class={isFavorited ? 'text-red-500' : ''}
+				class={isStarred ? 'text-red-500' : ''}
 			>
 				<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
 			</svg>

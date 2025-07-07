@@ -8,6 +8,70 @@
 	import type { Site } from '$lib/types.js';
 	import type { PageData } from './$types';
 
+	// 本地存储管理类
+	class LocalStorageManager {
+		private static STARRED_SITES_KEY = 'webdirsto_starred_sites';
+		private static VISIT_COUNTS_KEY = 'webdirsto_visit_counts';
+
+		// 获取收藏网站
+		static getStarredSites(): string[] {
+			if (!browser) return [];
+			try {
+				const stored = localStorage.getItem(this.STARRED_SITES_KEY);
+				return stored ? JSON.parse(stored) : [];
+			} catch {
+				return [];
+			}
+		}
+
+		// 保存收藏网站
+		static setStarredSites(siteUrls: string[]): void {
+			if (!browser) return;
+			try {
+				localStorage.setItem(this.STARRED_SITES_KEY, JSON.stringify(siteUrls));
+			} catch (e) {
+				console.warn('Failed to save starred sites:', e);
+			}
+		}
+
+		// 获取访问次数
+		static getVisitCounts(): Record<string, number> {
+			if (!browser) return {};
+			try {
+				const stored = localStorage.getItem(this.VISIT_COUNTS_KEY);
+				return stored ? JSON.parse(stored) : {};
+			} catch {
+				return {};
+			}
+		}
+
+		// 保存访问次数
+		static setVisitCounts(counts: Record<string, number>): void {
+			if (!browser) return;
+			try {
+				localStorage.setItem(this.VISIT_COUNTS_KEY, JSON.stringify(counts));
+			} catch (e) {
+				console.warn('Failed to save visit counts:', e);
+			}
+		}
+
+		// 记录网站访问
+		static recordVisit(siteUrl: string): void {
+			const counts = this.getVisitCounts();
+			counts[siteUrl] = (counts[siteUrl] || 0) + 1;
+			this.setVisitCounts(counts);
+		}
+
+		// 获取常用网站（按访问次数排序）
+		static getFrequentSites(allSites: Site[], limit: number = 6): Site[] {
+			const counts = this.getVisitCounts();
+			return allSites
+				.filter(site => counts[site.url] > 0)
+				.sort((a, b) => (counts[b.url] || 0) - (counts[a.url] || 0))
+				.slice(0, limit);
+		}
+	}
+
 	interface Props {
 		data: PageData;
 	}
@@ -22,14 +86,38 @@
 	let showAdultContent = $state(false);
 	let filteredSites = $state<Site[]>([]);
 
+	// 用户数据状态
+	let userStarredSites = $state<string[]>([]);
+	let userFrequentSites = $state<Site[]>([]);
+	let userStarredSiteObjects = $state<Site[]>([]);
+
 	onMount(() => {
 		// 只在浏览器环境中执行
 		if (browser) {
 			// 检查18+内容显示偏好
 			showAdultContent = localStorage.getItem('show-18plus') === 'true';
+
+			// 初始化用户数据
+			initializeUserData();
 			updateFilteredSites();
 		}
 	});
+
+	// 初始化用户数据
+	function initializeUserData() {
+		// 加载收藏网站
+		userStarredSites = LocalStorageManager.getStarredSites();
+		userStarredSiteObjects = sites.filter(site => userStarredSites.includes(site.url));
+
+		// 加载常用网站
+		userFrequentSites = LocalStorageManager.getFrequentSites(sites, 6);
+
+		// 调试信息
+		console.log('初始化用户数据:');
+		console.log('收藏网站URLs:', userStarredSites);
+		console.log('收藏网站对象:', userStarredSiteObjects);
+		console.log('常用网站:', userFrequentSites);
+	}
 
 	function updateFilteredSites() {
 		if (!browser) return;
@@ -59,6 +147,52 @@
 		updateFilteredSites();
 	}
 
+	// 切换收藏状态
+	function toggleStarred(site: Site) {
+		if (!browser) return;
+
+		const isCurrentlyStarred = userStarredSites.includes(site.url);
+		console.log(`切换收藏: ${site.title} (${site.url}), 当前状态: ${isCurrentlyStarred ? '已收藏' : '未收藏'}`);
+
+		if (isCurrentlyStarred) {
+			// 取消收藏
+			userStarredSites = userStarredSites.filter(url => url !== site.url);
+			userStarredSiteObjects = userStarredSiteObjects.filter(s => s.url !== site.url);
+			console.log('已取消收藏');
+		} else {
+			// 添加收藏
+			userStarredSites = [...userStarredSites, site.url];
+			userStarredSiteObjects = [...userStarredSiteObjects, site];
+			console.log('已添加收藏');
+		}
+
+		// 保存到localStorage
+		LocalStorageManager.setStarredSites(userStarredSites);
+		console.log('更新后的收藏列表:', userStarredSites);
+	}
+
+	// 记录网站访问
+	function handleSiteVisit(site: Site) {
+		if (!browser) return;
+
+		console.log(`访问网站: ${site.title} (${site.url})`);
+
+		// 记录访问
+		LocalStorageManager.recordVisit(site.url);
+
+		// 更新常用网站列表
+		userFrequentSites = LocalStorageManager.getFrequentSites(sites, 6);
+		console.log('更新后的常用网站:', userFrequentSites);
+
+		// 打开网站
+		window.open(site.url, '_blank');
+	}
+
+	// 检查网站是否被收藏
+	function isStarred(site: Site): boolean {
+		return userStarredSites.includes(site.url);
+	}
+
 	function handleAdultContentToggle() {
 		console.log('handleAdultContentToggle');
 		
@@ -78,11 +212,7 @@
 		updateFilteredSites();
 	}
 
-	function handleFavorite(site: Site) {
-		if (!browser) return;
-		// 在实际应用中，这里会保存到localStorage或发送到服务器
-		console.log('收藏网站:', site.title);
-	}
+
 
 </script>
 
@@ -110,7 +240,12 @@
 			<h2 class="text-2xl font-bold mb-4">搜索结果 ({filteredSites.length})</h2>
 			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
 				{#each filteredSites as site (site.url)}
-					<SiteCard {site} onFavorite={handleFavorite} />
+					<SiteCard
+						{site}
+						onVisit={() => handleSiteVisit(site)}
+						onFavorite={() => toggleStarred(site)}
+						isStarred={isStarred(site)}
+					/>
 				{/each}
 			</div>
 			{#if filteredSites.length === 0}
@@ -120,6 +255,51 @@
 			{/if}
 		</section>
 	{:else}
+		<!-- 用户常用网站 -->
+		{#if userFrequentSites.length > 0}
+			<section class="mb-12">
+				<h2 class="text-2xl font-bold mb-4 flex items-center">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-orange-500">
+						<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+					</svg>
+					常用网站
+					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userFrequentSites.length})</span>
+				</h2>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{#each userFrequentSites as site}
+						<SiteCard
+							{site}
+							onVisit={() => handleSiteVisit(site)}
+							onFavorite={() => toggleStarred(site)}
+							isStarred={isStarred(site)}
+						/>
+					{/each}
+				</div>
+			</section>
+		{/if}
+
+		<!-- 用户收藏网站 -->
+		{#if userStarredSiteObjects.length > 0}
+			<section class="mb-12">
+				<h2 class="text-2xl font-bold mb-4 flex items-center">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-red-500">
+						<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+					</svg>
+					我的收藏
+					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userStarredSiteObjects.length})</span>
+				</h2>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{#each userStarredSiteObjects as site}
+						<SiteCard
+							{site}
+							onVisit={() => handleSiteVisit(site)}
+							onFavorite={() => toggleStarred(site)}
+							isStarred={isStarred(site)}
+						/>
+					{/each}
+				</div>
+			</section>
+		{/if}
 		<!-- 置顶推荐 - 服务端渲染 -->
 		{#if starredSites.length > 0}
 			<section class="mb-12">
@@ -133,7 +313,13 @@
 				</h2>
 				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
 					{#each starredSites.filter(site => showAdultContent || site.ageRating !== '18+') as site (site.url)}
-						<SiteCard {site} onFavorite={handleFavorite} priority={true} />
+						<SiteCard
+							{site}
+							onVisit={() => handleSiteVisit(site)}
+							onFavorite={() => toggleStarred(site)}
+							isStarred={isStarred(site)}
+							priority={true}
+						/>
 					{/each}
 				</div>
 			</section>
@@ -148,7 +334,12 @@
 						<h2 class="text-2xl font-bold mb-4">{category}</h2>
 						<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
 							{#each filteredCategorySites as site (site.url)}
-								<SiteCard {site} onFavorite={handleFavorite} />
+								<SiteCard
+									{site}
+									onVisit={() => handleSiteVisit(site)}
+									onFavorite={() => toggleStarred(site)}
+									isStarred={isStarred(site)}
+								/>
 							{/each}
 						</div>
 					</div>

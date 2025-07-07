@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalStorage 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .output { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>LocalStorage 功能测试</h1>
+    
+    <div class="section">
+        <h2>收藏网站测试</h2>
+        <input type="text" id="siteUrl" placeholder="输入网站URL" value="https://example.com">
+        <button onclick="addStarred()">添加收藏</button>
+        <button onclick="removeStarred()">移除收藏</button>
+        <button onclick="showStarred()">显示收藏</button>
+        <div class="output" id="starredOutput"></div>
+    </div>
+    
+    <div class="section">
+        <h2>访问记录测试</h2>
+        <input type="text" id="visitUrl" placeholder="输入网站URL" value="https://example.com">
+        <button onclick="recordVisit()">记录访问</button>
+        <button onclick="showVisits()">显示访问记录</button>
+        <div class="output" id="visitsOutput"></div>
+    </div>
+    
+    <div class="section">
+        <h2>清理测试</h2>
+        <button onclick="clearAll()">清空所有数据</button>
+    </div>
+
+    <script>
+        const STARRED_SITES_KEY = 'webdirsto_starred_sites';
+        const VISIT_COUNTS_KEY = 'webdirsto_visit_counts';
+
+        function getStarredSites() {
+            try {
+                const stored = localStorage.getItem(STARRED_SITES_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function setStarredSites(siteUrls) {
+            try {
+                localStorage.setItem(STARRED_SITES_KEY, JSON.stringify(siteUrls));
+            } catch (e) {
+                console.warn('Failed to save starred sites:', e);
+            }
+        }
+
+        function getVisitCounts() {
+            try {
+                const stored = localStorage.getItem(VISIT_COUNTS_KEY);
+                return stored ? JSON.parse(stored) : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function setVisitCounts(counts) {
+            try {
+                localStorage.setItem(VISIT_COUNTS_KEY, JSON.stringify(counts));
+            } catch (e) {
+                console.warn('Failed to save visit counts:', e);
+            }
+        }
+
+        function addStarred() {
+            const url = document.getElementById('siteUrl').value;
+            if (!url) return;
+            
+            const starred = getStarredSites();
+            if (!starred.includes(url)) {
+                starred.push(url);
+                setStarredSites(starred);
+            }
+            showStarred();
+        }
+
+        function removeStarred() {
+            const url = document.getElementById('siteUrl').value;
+            if (!url) return;
+            
+            const starred = getStarredSites();
+            const filtered = starred.filter(u => u !== url);
+            setStarredSites(filtered);
+            showStarred();
+        }
+
+        function showStarred() {
+            const starred = getStarredSites();
+            document.getElementById('starredOutput').innerHTML = 
+                '<strong>收藏的网站:</strong><br>' + 
+                (starred.length > 0 ? starred.join('<br>') : '无收藏网站');
+        }
+
+        function recordVisit() {
+            const url = document.getElementById('visitUrl').value;
+            if (!url) return;
+            
+            const counts = getVisitCounts();
+            counts[url] = (counts[url] || 0) + 1;
+            setVisitCounts(counts);
+            showVisits();
+        }
+
+        function showVisits() {
+            const counts = getVisitCounts();
+            const output = document.getElementById('visitsOutput');
+            
+            if (Object.keys(counts).length === 0) {
+                output.innerHTML = '<strong>访问记录:</strong><br>无访问记录';
+                return;
+            }
+            
+            let html = '<strong>访问记录:</strong><br>';
+            for (const [url, count] of Object.entries(counts)) {
+                html += `${url}: ${count}次<br>`;
+            }
+            output.innerHTML = html;
+        }
+
+        function clearAll() {
+            localStorage.removeItem(STARRED_SITES_KEY);
+            localStorage.removeItem(VISIT_COUNTS_KEY);
+            showStarred();
+            showVisits();
+            alert('所有数据已清空');
+        }
+
+        // 初始化显示
+        showStarred();
+        showVisits();
+    </script>
+</body>
+</html>
