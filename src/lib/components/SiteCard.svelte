@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { getFallbackFavicon, getFallbackScreenshot, getScreenshotUrl } from '$lib/tools.js';
 	import type { Site } from '../types.js';
 	import LazyImage from './LazyImage.svelte';
 
@@ -27,14 +28,6 @@
 			window.open(site.url, '_blank');
 		}
 	}
-
-	function getScreenshotUrl(url: string): string {
-		return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
-	}
-
-	function getFallbackImage(title: string): string {
-		return `https://placehold.co/600x400/333/fff?text=${encodeURIComponent(title)}`;
-	}
 </script>
 
 <div class="site-card" data-title={site.title} data-tags={site.tags.join(',')}>
@@ -42,13 +35,19 @@
 		<LazyImage
 			src={getScreenshotUrl(site.url)}
 			alt="{site.title} Screenshot"
-			fallback={getFallbackImage(site.title)}
+			fallback={getFallbackScreenshot(site.url)}
 			class="screenshot-img"
 			loading={priority ? 'eager' : 'lazy'}
 		/>
 		<div class="p-4">
 			<div class="flex items-center mb-2">
-				<img src={site.favicon} class="w-5 h-5 mr-2 rounded-sm" alt="favicon" />
+				<LazyImage
+					src={site.favicon}
+					alt="favicon"
+					fallback={getFallbackFavicon(site.url)}
+					class="w-5 h-5 mr-2 rounded-sm rounded-gray-800 bg-white dark:bg-white"
+					loading="lazy"
+				/>
 				<a
 					href={site.url}
 					target="_blank"

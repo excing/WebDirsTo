@@ -7,6 +7,7 @@
 	import PerformanceMonitor from '$lib/components/PerformanceMonitor.svelte';
 	import type { Site } from '$lib/types.js';
 	import type { PageData } from './$types';
+    import SiteItem from '$lib/components/SiteItem.svelte';
 
 	// 本地存储管理类
 	class LocalStorageManager {
@@ -265,13 +266,12 @@
 					常用网站
 					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userFrequentSites.length})</span>
 				</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<!-- 自动换行布局 -->
+				<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6">
 					{#each userFrequentSites as site}
-						<SiteCard
+						<SiteItem
 							{site}
 							onVisit={() => handleSiteVisit(site)}
-							onFavorite={() => toggleStarred(site)}
-							isStarred={isStarred(site)}
 						/>
 					{/each}
 				</div>
@@ -288,13 +288,11 @@
 					我的收藏
 					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userStarredSiteObjects.length})</span>
 				</h2>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6">
 					{#each userStarredSiteObjects as site}
-						<SiteCard
+						<SiteItem
 							{site}
 							onVisit={() => handleSiteVisit(site)}
-							onFavorite={() => toggleStarred(site)}
-							isStarred={isStarred(site)}
 						/>
 					{/each}
 				</div>

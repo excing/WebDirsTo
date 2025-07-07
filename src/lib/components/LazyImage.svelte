@@ -68,6 +68,7 @@
 		img.onerror = () => {
 			hasError = true;
 			currentSrc = fallback;
+			img.src = fallback;
 		};
 		img.src = src;
 	}
