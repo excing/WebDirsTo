@@ -189,6 +189,21 @@
 		window.open(site.url, '_blank');
 	}
 
+	// 移除常用网站
+	function removeSiteVisit(site: Site) {
+		if (!browser) return;
+
+		console.log(`移除常用网站: ${site.title} (${site.url})`);
+
+		// 移除访问记录
+		const counts = LocalStorageManager.getVisitCounts();
+		delete counts[site.url];
+		LocalStorageManager.setVisitCounts(counts);
+
+		// 更新常用网站列表
+		userFrequentSites = LocalStorageManager.getFrequentSites(sites, 6);
+	}
+
 	// 检查网站是否被收藏
 	function isStarred(site: Site): boolean {
 		return userStarredSites.includes(site.url);
@@ -267,11 +282,12 @@
 					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userFrequentSites.length})</span>
 				</h2>
 				<!-- 自动换行布局 -->
-				<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6">
+				<div class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-6">
 					{#each userFrequentSites as site}
 						<SiteItem
 							{site}
 							onVisit={() => handleSiteVisit(site)}
+							onRemove={() => removeSiteVisit(site)}
 						/>
 					{/each}
 				</div>
@@ -288,11 +304,12 @@
 					我的收藏
 					<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({userStarredSiteObjects.length})</span>
 				</h2>
-				<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-6">
+				<div class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-6">
 					{#each userStarredSiteObjects as site}
 						<SiteItem
 							{site}
 							onVisit={() => handleSiteVisit(site)}
+							onRemove={() => toggleStarred(site)}
 						/>
 					{/each}
 				</div>
