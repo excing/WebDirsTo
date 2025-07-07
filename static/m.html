@@ -86,7 +86,7 @@
             </section>
         </main>
 
-        <details class="mt-6 bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-lg w-full text-left">
+        <details id="about-section" class="mt-6 bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-lg w-full text-left">
             <summary data-lang-key="aboutTitle" class="font-semibold text-lg cursor-pointer text-slate-700 dark:text-slate-300">关于本应用</summary>
             <div class="mt-4 text-slate-600 dark:text-slate-400 space-y-4" data-lang-key="aboutContent"></div>
         </details>
@@ -104,6 +104,7 @@
                 pausedStatus: "Paused", completedStatus: "Completed!",
                 intervalLabel: "Sound Interval (minutes)", bgSoundLabel: "Background Sound",
                 bgSoundNone: "None", bgSoundRain: "Rain", bgSoundForest: "Forest",
+                fullscreen: "Fullscreen", exitFullscreen: "Exit Fullscreen",
                 aboutTitle: "About This App",
                 aboutContent: `<p>This application is a single-page mindfulness timer designed to help you maintain focus. During the timer session, it plays a soothing audio at random short intervals (customizable from 1-5 minutes) to act as a gentle reminder or a break in mental patterns.</p><div><h3 class="font-semibold mb-2">Who is this for?</h3><ul class="list-disc list-inside space-y-1"><li>Professionals who need long periods of focus.</li><li>Students during long study sessions.</li><li>Meditation or mindfulness practitioners.</li><li>Anyone looking to improve their environment with ambient sounds.</li></ul></div>`
             },
@@ -113,6 +114,7 @@
                 pausedStatus: "已暂停", completedStatus: "计时完成!",
                 intervalLabel: "音效间隔 (分钟)", bgSoundLabel: "背景音",
                 bgSoundNone: "无", bgSoundRain: "雨声", bgSoundForest: "森林",
+                fullscreen: "全屏", exitFullscreen: "退出全屏",
                 aboutTitle: "关于本应用",
                 aboutContent: `<p>本应用是一款单页正念计时器，旨在帮助您保持专注。在计时过程中，它会以可自定义的随机时间间隔播放一段舒缓的音频，作为温和的提醒或打破思维定势的节点。</p><div><h3 class="font-semibold mb-2">目标人群</h3><ul class="list-disc list-inside space-y-1"><li>需要长时间专注工作的专业人士。</li><li>长时间学习的学生。</li><li>冥想或正念练习者。</li><li>希望通过背景音改善环境氛围的用户。</li></ul></div>`
             }
@@ -131,6 +133,8 @@
         const bgSoundSelect = document.getElementById('bg-sound-select');
         const volumeSlider = document.getElementById('volume-slider');
         const langSwitcher = document.getElementById('lang-switcher');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const aboutSection = document.getElementById('about-section');
 
         // --- Audio Sources ---
         const effectSources = ['https://cdn.pixabay.com/audio/2022/11/21/audio_1b7f7e3ca3.mp3'];
@@ -149,6 +153,7 @@
         let isRunning = false;
         let currentLang = 'zh';
         let expectedEndTime;
+        let isFullscreen = false;
 
         // --- Functions ---
         function setLanguage(lang) {
@@ -171,6 +176,9 @@
             
             if (!isRunning) startPauseBtn.textContent = langStrings.start;
             else startPauseBtn.textContent = langStrings.pause;
+
+            // Update fullscreen button text
+            fullscreenBtn.textContent = isFullscreen ? langStrings.exitFullscreen : langStrings.fullscreen;
         }
 
         function updateDisplay() {
@@ -290,6 +298,40 @@
                 bgPlayer.currentTime = 0;
             }
         }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().then(() => {
+                    isFullscreen = true;
+                    aboutSection.style.display = 'none';
+                    fullscreenBtn.textContent = translations[currentLang].exitFullscreen;
+                }).catch(err => {
+                    console.error('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                // Exit fullscreen
+                document.exitFullscreen().then(() => {
+                    isFullscreen = false;
+                    aboutSection.style.display = 'block';
+                    fullscreenBtn.textContent = translations[currentLang].fullscreen;
+                }).catch(err => {
+                    console.error('Error attempting to exit fullscreen:', err);
+                });
+            }
+        }
+
+        // Handle fullscreen change events (e.g., when user presses ESC)
+        function handleFullscreenChange() {
+            isFullscreen = !!document.fullscreenElement;
+            if (isFullscreen) {
+                aboutSection.style.display = 'none';
+                fullscreenBtn.textContent = translations[currentLang].exitFullscreen;
+            } else {
+                aboutSection.style.display = 'block';
+                fullscreenBtn.textContent = translations[currentLang].fullscreen;
+            }
+        }
         
         // --- Event Listeners ---
         startPauseBtn.addEventListener('click', () => { isRunning ? pauseTimer() : startTimer(); });
@@ -313,6 +355,11 @@
         volumeSlider.addEventListener('input', (e) => {
             bgPlayer.volume = e.target.value;
         });
+
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        // Listen for fullscreen change events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
 
         // --- Initial Setup ---
         const savedLang = localStorage.getItem('timerLang');
