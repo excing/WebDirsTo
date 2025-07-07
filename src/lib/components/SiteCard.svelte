@@ -36,7 +36,7 @@
 			src={getScreenshotUrl(site.url)}
 			alt="{site.title} Screenshot"
 			fallback={getFallbackScreenshot(site.url)}
-			class="screenshot-img"
+			class="screenshot-img transition-transform duration-300 group-hover:scale-105"
 			loading={priority ? 'eager' : 'lazy'}
 		/>
 		<div class="p-4">
