@@ -1,38 +1,40 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import SiteCard from '$lib/components/SiteCard.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import SearchBox from '$lib/components/SearchBox.svelte';
-	import { sampleSites } from '$lib/data.js';
+	import PerformanceMonitor from '$lib/components/PerformanceMonitor.svelte';
 	import type { Site } from '$lib/types.js';
+	import type { PageData } from './$types';
 
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+
+	// 从服务端获取的数据
+	const { sites, starredSites, categorizedSites, stats, meta } = data;
+
+	// 客户端状态
 	let searchQuery = $state('');
 	let showAdultContent = $state(false);
 	let filteredSites = $state<Site[]>([]);
 
-	// 分组网站数据
-	let starredSites = $derived(sampleSites.filter(site => site.starred));
-	let categorizedSites = $derived(() => {
-		const categories: Record<string, Site[]> = {};
-		sampleSites.filter(site => !site.starred).forEach(site => {
-			if (!categories[site.category]) {
-				categories[site.category] = [];
-			}
-			categories[site.category].push(site);
-		});
-		return categories;
-	});
-
 	onMount(() => {
-		// 检查18+内容显示偏好
-		if (typeof localStorage !== 'undefined') {
+		// 只在浏览器环境中执行
+		if (browser) {
+			// 检查18+内容显示偏好
 			showAdultContent = localStorage.getItem('show-18plus') === 'true';
+			updateFilteredSites();
 		}
-		updateFilteredSites();
 	});
 
 	function updateFilteredSites() {
-		filteredSites = sampleSites.filter(site => {
+		if (!browser) return;
+
+		filteredSites = sites.filter(site => {
 			// 年龄分级过滤
 			if (site.ageRating === '18+' && !showAdultContent) {
 				return false;
@@ -58,30 +60,32 @@
 	}
 
 	function handleAdultContentToggle() {
+		if (!browser) return;
+
 		if (!showAdultContent) {
 			if (confirm('您确认已满18周岁，并希望显示成人内容吗？')) {
 				showAdultContent = true;
-				if (typeof localStorage !== 'undefined') {
-					localStorage.setItem('show-18plus', 'true');
-				}
+				localStorage.setItem('show-18plus', 'true');
 			}
 		} else {
 			showAdultContent = false;
-			if (typeof localStorage !== 'undefined') {
-				localStorage.setItem('show-18plus', 'false');
-			}
+			localStorage.setItem('show-18plus', 'false');
 		}
 		updateFilteredSites();
 	}
 
 	function handleFavorite(site: Site) {
+		if (!browser) return;
 		// 在实际应用中，这里会保存到localStorage或发送到服务器
 		console.log('收藏网站:', site.title);
 	}
+
 </script>
 
 <svelte:head>
-	<title>探索导航 - 您的个性化上网主页</title>
+	<title>{meta.title}</title>
+	<meta name="description" content={meta.description} />
+	<meta name="keywords" content={meta.keywords} />
 </svelte:head>
 
 <div class="min-h-screen container mx-auto px-4 py-8">
@@ -112,7 +116,7 @@
 			{/if}
 		</section>
 	{:else}
-		<!-- 置顶推荐 -->
+		<!-- 置顶推荐 - 服务端渲染 -->
 		{#if starredSites.length > 0}
 			<section class="mb-12">
 				<h2 class="text-2xl font-bold mb-4 flex items-center">
@@ -124,30 +128,51 @@
 					置顶推荐
 				</h2>
 				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-					{#each starredSites as site (site.url)}
-						<SiteCard {site} onFavorite={handleFavorite} />
+					{#each starredSites.filter(site => showAdultContent || site.ageRating !== '18+') as site (site.url)}
+						<SiteCard {site} onFavorite={handleFavorite} priority={true} />
 					{/each}
 				</div>
 			</section>
 		{/if}
 
-		<!-- 分类网站 -->
+		<!-- 分类网站 - 服务端渲染 -->
 		<main>
-			{#each Object.entries(categorizedSites) as [category, sites] (category)}
-				<div class="category-group mb-12">
-					<h2 class="text-2xl font-bold mb-4">{category}</h2>
-					<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-						{#each sites.filter((site: Site) => showAdultContent || site.ageRating !== '18+') as site (site.url)}
-							<SiteCard {site} onFavorite={handleFavorite} />
-						{/each}
+			{#each Object.entries(categorizedSites) as [category, categorySites] (category)}
+				{@const filteredCategorySites = categorySites.filter(site => showAdultContent || site.ageRating !== '18+')}
+				{#if filteredCategorySites.length > 0}
+					<div class="category-group mb-12">
+						<h2 class="text-2xl font-bold mb-4">{category}</h2>
+						<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+							{#each filteredCategorySites as site (site.url)}
+								<SiteCard {site} onFavorite={handleFavorite} />
+							{/each}
+						</div>
 					</div>
-				</div>
+				{/if}
 			{/each}
 		</main>
 	{/if}
 
 	<!-- Footer -->
 	<footer class="mt-12 text-center text-gray-500 dark:text-gray-400 text-sm">
+		<!-- 统计信息 -->
+		<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+			<div class="grid grid-cols-3 gap-4 text-center">
+				<div>
+					<div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalSites}</div>
+					<div class="text-sm">收录网站</div>
+				</div>
+				<div>
+					<div class="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalCategories}</div>
+					<div class="text-sm">网站分类</div>
+				</div>
+				<div>
+					<div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.starredCount}</div>
+					<div class="text-sm">置顶推荐</div>
+				</div>
+			</div>
+		</div>
+
 		<div class="flex justify-center items-center space-x-4 mb-4">
 			<button
 				class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
@@ -168,4 +193,7 @@
 		<p>&copy; 2025 探索导航. All Rights Reserved.</p>
 		<p><a href="/admin" class="hover:underline">管理员登录</a></p>
 	</footer>
+
+	<!-- 性能监控组件 -->
+	<PerformanceMonitor />
 </div>
