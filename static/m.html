@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>随机音频正念计时器 - 提高专注力与放松身心</title>
+    <meta name="description" content="一款免费的在线正念计时器，可自定义随机音效间隔和背景音，帮助您在工作、学习和冥想时保持专注，放松身心。">
+    <meta name="keywords" content="正念, 专注, 计时器, 随机音频, 背景音, 白噪音, 工作钟, 冥想, focus timer, mindfulness bell, pomodoro, ambient sound">
+    
+    <link rel="alternate" hreflang="zh" href="https://example.com/index.html?lang=zh" />
+    <link rel="alternate" hreflang="en" href="https://example.com/index.html?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://example.com/index.html" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        /* 自定义滑块样式 */
+        input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #e2e8f0; border-radius: 5px; outline: none; transition: opacity .2s; }
+        .dark input[type=range] { background: #475569; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #0ea5e9; border-radius: 50%; cursor: pointer; }
+        input[type=range]::-moz-range-thumb { width: 20px; height: 20px; background: #0ea5e9; border-radius: 50%; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex items-center justify-center min-h-screen p-4 transition-colors duration-500">
+
+    <div class="w-full max-w-md">
+        <div class="flex justify-between items-center mb-2">
+            <button id="fullscreen-btn" class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-lang-key="fullscreen">全屏</button>
+            <button id="lang-switcher" class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">EN</button>
+        </div>
+
+        <main class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full text-center">
+            
+            <header class="mb-6">
+                <h1 data-lang-key="title" class="text-3xl sm:text-4xl font-bold text-sky-600 dark:text-sky-400">正念计时器</h1>
+                <p data-lang-key="subtitle" class="text-slate-500 dark:text-slate-400 mt-2">在随机的宁静中，找到专注的力量</p>
+            </header>
+
+            <section id="timer-display-section" class="my-8">
+                <div id="time-display" class="text-6xl sm:text-7xl font-bold tracking-wider text-slate-900 dark:text-white">90:00</div>
+                <div id="status-message" class="mt-4 text-lg text-amber-500 h-7"></div>
+            </section>
+
+            <!-- Settings Section -->
+            <div class="space-y-6 mb-8">
+                <!-- Main Duration -->
+                <div>
+                    <label for="duration-input" data-lang-key="durationLabel" class="block mb-2 font-medium text-slate-600 dark:text-slate-300">总时长 (分钟)</label>
+                    <input type="number" id="duration-input" value="90" min="1" class="w-32 text-center bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <!-- Interval Settings -->
+                <div class="hidden">
+                    <label data-lang-key="intervalLabel" class="block mb-2 font-medium text-slate-600 dark:text-slate-300">音效间隔 (分钟)</label>
+                    <div class="flex justify-center items-center gap-2">
+                        <input type="number" id="min-interval-input" value="2" min="1" class="w-20 text-center bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <span class="dark:text-slate-400">-</span>
+                        <input type="number" id="max-interval-input" value="5" min="1" class="w-20 text-center bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+                <!-- Background Sound Settings -->
+                <div class="hidden">
+                    <label for="bg-sound-select" data-lang-key="bgSoundLabel" class="block mb-2 font-medium text-slate-600 dark:text-slate-300">背景音</label>
+                    <div class="flex justify-center items-center gap-4">
+                        <select id="bg-sound-select" class="flex-grow bg-slate-100 dark:bg-slate-700 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="none" data-lang-key="bgSoundNone">无</option>
+                            <option value="rain" data-lang-key="bgSoundRain">雨声</option>
+                            <option value="forest" data-lang-key="bgSoundForest">森林</option>
+                        </select>
+                        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5" class="w-24">
+                    </div>
+                </div>
+            </div>
+
+            <section class="grid grid-cols-2 gap-4">
+                <button id="start-pause-btn" data-lang-key="start" class="py-3 px-4 bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200">开始</button>
+                <button id="reset-btn" data-lang-key="reset" class="py-3 px-4 bg-slate-500 text-white font-semibold rounded-lg shadow-md hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200">重置</button>
+            </section>
+        </main>
+
+        <details class="mt-6 bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-lg w-full text-left">
+            <summary data-lang-key="aboutTitle" class="font-semibold text-lg cursor-pointer text-slate-700 dark:text-slate-300">关于本应用</summary>
+            <div class="mt-4 text-slate-600 dark:text-slate-400 space-y-4" data-lang-key="aboutContent"></div>
+        </details>
+    </div>
+    
+    <audio id="effect-player" preload="auto"></audio>
+    <audio id="bg-player" preload="auto" loop></audio>
+
+    <script>
+        // --- i18n Translation Strings ---
+        const translations = {
+            en: {
+                title: "Mindfulness Timer", subtitle: "Find your focus in random moments of calm",
+                durationLabel: "Total Duration (minutes)", start: "Start", pause: "Pause", reset: "Reset",
+                pausedStatus: "Paused", completedStatus: "Completed!",
+                intervalLabel: "Sound Interval (minutes)", bgSoundLabel: "Background Sound",
+                bgSoundNone: "None", bgSoundRain: "Rain", bgSoundForest: "Forest",
+                aboutTitle: "About This App",
+                aboutContent: `<p>This application is a single-page mindfulness timer designed to help you maintain focus. During the timer session, it plays a soothing audio at random short intervals (customizable from 1-5 minutes) to act as a gentle reminder or a break in mental patterns.</p><div><h3 class="font-semibold mb-2">Who is this for?</h3><ul class="list-disc list-inside space-y-1"><li>Professionals who need long periods of focus.</li><li>Students during long study sessions.</li><li>Meditation or mindfulness practitioners.</li><li>Anyone looking to improve their environment with ambient sounds.</li></ul></div>`
+            },
+            zh: {
+                title: "正念计时器", subtitle: "在随机的宁静中，找到专注的力量",
+                durationLabel: "总时长 (分钟)", start: "开始", pause: "暂停", reset: "重置",
+                pausedStatus: "已暂停", completedStatus: "计时完成!",
+                intervalLabel: "音效间隔 (分钟)", bgSoundLabel: "背景音",
+                bgSoundNone: "无", bgSoundRain: "雨声", bgSoundForest: "森林",
+                aboutTitle: "关于本应用",
+                aboutContent: `<p>本应用是一款单页正念计时器，旨在帮助您保持专注。在计时过程中，它会以可自定义的随机时间间隔播放一段舒缓的音频，作为温和的提醒或打破思维定势的节点。</p><div><h3 class="font-semibold mb-2">目标人群</h3><ul class="list-disc list-inside space-y-1"><li>需要长时间专注工作的专业人士。</li><li>长时间学习的学生。</li><li>冥想或正念练习者。</li><li>希望通过背景音改善环境氛围的用户。</li></ul></div>`
+            }
+        };
+
+        // --- DOM Elements ---
+        const durationInput = document.getElementById('duration-input');
+        const minIntervalInput = document.getElementById('min-interval-input');
+        const maxIntervalInput = document.getElementById('max-interval-input');
+        const timeDisplay = document.getElementById('time-display');
+        const statusMessage = document.getElementById('status-message');
+        const startPauseBtn = document.getElementById('start-pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const effectPlayer = document.getElementById('effect-player');
+        const bgPlayer = document.getElementById('bg-player');
+        const bgSoundSelect = document.getElementById('bg-sound-select');
+        const volumeSlider = document.getElementById('volume-slider');
+        const langSwitcher = document.getElementById('lang-switcher');
+
+        // --- Audio Sources ---
+        const effectSources = ['https://cdn.pixabay.com/audio/2022/11/21/audio_1b7f7e3ca3.mp3'];
+        const bgSources = {
+            rain: 'https://cdn.pixabay.com/audio/2025/04/23/audio_b3163c6993.mp3',
+            forest: 'https://cdn.pixabay.com/audio/2025/03/28/audio_72e1d59448.mp3'
+        };
+        effectSources.forEach(src => { new Audio().src = src; });
+        Object.values(bgSources).forEach(src => { new Audio().src = src; });
+
+        // --- State Variables ---
+        let totalDuration = 90 * 60;
+        let secondsLeft = totalDuration;
+        let timerId = null; // For the main timer loop
+        let soundTimeoutId = null;
+        let isRunning = false;
+        let currentLang = 'zh';
+        let expectedEndTime;
+
+        // --- Functions ---
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('timerLang', lang);
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            langSwitcher.textContent = lang === 'zh' ? 'EN' : '中文';
+            
+            const langStrings = translations[lang];
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                if (key === 'aboutContent') {
+                    el.innerHTML = langStrings[key];
+                } else if (langStrings[key]) {
+                    el.textContent = langStrings[key];
+                }
+            });
+            document.title = langStrings.title;
+            document.querySelector('meta[name="description"]').setAttribute('content', langStrings.aboutContent.replace(/<[^>]*>/g, ' '));
+            
+            if (!isRunning) startPauseBtn.textContent = langStrings.start;
+            else startPauseBtn.textContent = langStrings.pause;
+        }
+
+        function updateDisplay() {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function playRandomEffect() {
+            const randomIndex = Math.floor(Math.random() * effectSources.length);
+            effectPlayer.src = effectSources[randomIndex];
+            effectPlayer.play().catch(e => console.error("Effect audio play failed:", e));
+            statusMessage.textContent = '🔔';
+            setTimeout(() => { if (statusMessage.textContent === '🔔') statusMessage.textContent = ''; }, 1500);
+        }
+
+        function scheduleNextSound() {
+            clearTimeout(soundTimeoutId);
+            if (!isRunning || secondsLeft <= 0) return;
+
+            let min = parseInt(minIntervalInput.value) * 60;
+            let max = parseInt(maxIntervalInput.value) * 60;
+            if (isNaN(min) || min < 1) min = 60;
+            if (isNaN(max) || max < min) max = min;
+            
+            const randomIntervalSeconds = Math.floor(Math.random() * (max - min + 1)) + min;
+            console.log(`Current system time: ${new Date().toLocaleTimeString()}: Next sound in ${randomIntervalSeconds} seconds`);
+
+            if (secondsLeft >= randomIntervalSeconds) {
+                soundTimeoutId = setTimeout(() => {
+                    playRandomEffect();
+                    scheduleNextSound();
+                }, randomIntervalSeconds * 1000);
+            }
+        }
+
+        /**
+         * The main timer loop. Uses self-correcting timing logic.
+         */
+        function timerLoop() {
+            // Calculate drift
+            const now = Date.now();
+            const remainingMillis = expectedEndTime - now;
+            secondsLeft = Math.round(remainingMillis / 1000);
+
+            if (secondsLeft <= 0) {
+                secondsLeft = 0;
+                finishTimer();
+            } else {
+                updateDisplay();
+                // Schedule the next tick
+                const nextTickDelay = remainingMillis % 1000;
+                timerId = setTimeout(timerLoop, nextTickDelay);
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            statusMessage.textContent = '';
+
+            // If starting fresh, set total duration
+            if (secondsLeft === totalDuration) {
+                totalDuration = parseInt(durationInput.value, 10) * 60;
+                secondsLeft = totalDuration;
+            }
+            
+            expectedEndTime = Date.now() + secondsLeft * 1000;
+            
+            updateDisplay();
+            timerId = setTimeout(timerLoop, 1000);
+
+            startPauseBtn.textContent = translations[currentLang].pause;
+            [durationInput, minIntervalInput, maxIntervalInput].forEach(el => el.disabled = true);
+            
+            if (bgPlayer.src) bgPlayer.play();
+            scheduleNextSound();
+        }
+
+        function pauseTimer() {
+            if (!isRunning) return;
+            isRunning = false;
+            clearTimeout(timerId);
+            clearTimeout(soundTimeoutId);
+            
+            startPauseBtn.textContent = translations[currentLang].start;
+            statusMessage.textContent = translations[currentLang].pausedStatus;
+            if (bgPlayer.src) bgPlayer.pause();
+        }
+        
+        function finishTimer() {
+            clearTimeout(timerId);
+            clearTimeout(soundTimeoutId);
+            isRunning = false;
+            updateDisplay();
+            statusMessage.textContent = translations[currentLang].completedStatus;
+            startPauseBtn.textContent = translations[currentLang].start;
+            [durationInput, minIntervalInput, maxIntervalInput].forEach(el => el.disabled = false);
+            if (bgPlayer.src) bgPlayer.pause();
+            playRandomEffect();
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearTimeout(timerId);
+            clearTimeout(soundTimeoutId);
+            
+            totalDuration = parseInt(durationInput.value, 10) * 60 || 90 * 60;
+            secondsLeft = totalDuration;
+            
+            updateDisplay();
+            startPauseBtn.textContent = translations[currentLang].start;
+            [durationInput, minIntervalInput, maxIntervalInput].forEach(el => el.disabled = false);
+            statusMessage.textContent = '';
+            if (bgPlayer.src) {
+                bgPlayer.pause();
+                bgPlayer.currentTime = 0;
+            }
+        }
+        
+        // --- Event Listeners ---
+        startPauseBtn.addEventListener('click', () => { isRunning ? pauseTimer() : startTimer(); });
+        resetBtn.addEventListener('click', resetTimer);
+        [durationInput, minIntervalInput, maxIntervalInput].forEach(el => {
+            el.addEventListener('change', () => { if (!isRunning) resetTimer(); });
+        });
+        langSwitcher.addEventListener('click', () => { setLanguage(currentLang === 'zh' ? 'en' : 'zh'); });
+        
+        bgSoundSelect.addEventListener('change', (e) => {
+            const selectedSound = e.target.value;
+            if (selectedSound === 'none') {
+                bgPlayer.src = '';
+                bgPlayer.pause();
+            } else {
+                bgPlayer.src = bgSources[selectedSound];
+                if (isRunning) bgPlayer.play();
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            bgPlayer.volume = e.target.value;
+        });
+
+        // --- Initial Setup ---
+        const savedLang = localStorage.getItem('timerLang');
+        const browserLang = navigator.language.startsWith('zh') ? 'zh' : 'en';
+        setLanguage(savedLang || browserLang);
+        bgPlayer.volume = volumeSlider.value;
+        resetTimer();
+    </script>
+</body>
+</html>
