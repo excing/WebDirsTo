@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import SiteCard from '$lib/components/SiteCard.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import SearchBox from '$lib/components/SearchBox.svelte';
@@ -191,9 +191,20 @@
 			</div>
 		</div>
 		<p>&copy; 2025 探索导航. All Rights Reserved.</p>
-		<p><a href="/admin" class="hover:underline">管理员登录</a></p>
+		<div><a href="/admin" target="_blank" class="hover:underline">管理员登录</a>
+			|
+			<a href="/api/health" target="_blank" class="hover:underline">健康检查</a>
+			|
+			<a href="/sitemap.xml" target="_blank" class="hover:underline">网站地图</a>
+			|
+			<a href="/robots.txt" target="_blank" class="hover:underline">robots.txt</a>
+			|
+			<a href="/api/sites" target="_blank" class="hover:underline">网站数据</a>
+		</div>
 	</footer>
 
 	<!-- 性能监控组件 -->
-	<PerformanceMonitor />
+	 {#if dev}
+		 <PerformanceMonitor />
+	 {/if}
 </div>

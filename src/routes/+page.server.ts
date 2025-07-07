@@ -1,22 +1,17 @@
 import type { PageServerLoad } from './$types';
-import { getCachedSites } from '$lib/server/data.js';
+import { getSites } from '$lib/server/data.js';
 import type { Site } from '$lib/types.js';
 
-export const load: PageServerLoad = async ({ setHeaders }) => {
+export const load: PageServerLoad = async () => {
 	try {
-		// 从缓存或GitHub API获取网站数据
-		const sites = await getCachedSites();
-
-		// 设置缓存头部，提高性能
-		setHeaders({
-			'cache-control': 'public, max-age=300' // 5分钟缓存
-		});
+		// 获取网站数据
+		const sites = await getSites();
 
 		// 分组网站数据
-		const starredSites = sites.filter(site => site.starred);
+		const starredSites = sites.filter((site: Site) => site.starred);
 		const categorizedSites: Record<string, Site[]> = {};
 
-		sites.filter(site => !site.starred).forEach(site => {
+		sites.forEach((site: Site) => {
 			if (!categorizedSites[site.category]) {
 				categorizedSites[site.category] = [];
 			}

@@ -1,13 +1,8 @@
 import type { Site } from '$lib/types.js';
 
-// 模拟从GitHub API获取数据的函数
-export async function fetchSitesFromGitHub(): Promise<Site[]> {
-	// 在实际应用中，这里会调用GitHub API
-	// const response = await fetch('https://raw.githubusercontent.com/your-repo/main/sites.txt');
-	// const content = await response.text();
-	// return parseSitesData(content);
-	
-	// 现在返回示例数据
+// 获取网站数据
+export async function fetchSitesFromSource(): Promise<Site[]> {
+	// 直接使用本地示例数据
 	const { sampleSites } = await import('$lib/data.js');
 	return sampleSites;
 }
@@ -67,20 +62,17 @@ export function generateSitemap(sites: Site[]): string {
 </urlset>`;
 }
 
-// 缓存管理
-const CACHE_DURATION = 5 * 60 * 1000; // 5分钟
-let cachedSites: Site[] | null = null;
-let cacheTimestamp = 0;
+// 微服务环境下的数据获取（无缓存）
+export async function getSites(): Promise<Site[]> {
+	return await fetchSitesFromSource();
+}
 
-export async function getCachedSites(): Promise<Site[]> {
-	const now = Date.now();
-	
-	if (cachedSites && (now - cacheTimestamp) < CACHE_DURATION) {
-		return cachedSites;
-	}
-	
-	cachedSites = await fetchSitesFromGitHub();
-	cacheTimestamp = now;
-	
-	return cachedSites;
+// 健康检查函数
+export async function healthCheck(): Promise<{ status: string; timestamp: string; sitesCount: number }> {
+	const sites = await fetchSitesFromSource();
+	return {
+		status: 'healthy',
+		timestamp: new Date().toISOString(),
+		sitesCount: sites.length
+	};
 }

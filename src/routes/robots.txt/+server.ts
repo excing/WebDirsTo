@@ -12,7 +12,6 @@ Crawl-delay: 1
 
 # Disallow admin areas
 Disallow: /admin
-Disallow: /api/admin
 
 # Allow all other content
 Allow: /
@@ -20,8 +19,7 @@ Allow: /
 
 	return new Response(robotsTxt, {
 		headers: {
-			'Content-Type': 'text/plain',
-			'Cache-Control': 'public, max-age=86400' // 24小时缓存
+			'Content-Type': 'text/plain'
 		}
 	});
 };
