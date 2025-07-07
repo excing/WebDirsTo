@@ -227,9 +227,6 @@
 		}
 		updateFilteredSites();
 	}
-
-
-
 </script>
 
 <svelte:head>
@@ -238,7 +235,7 @@
 	<meta name="keywords" content={meta.keywords} />
 </svelte:head>
 
-<div class="min-h-screen container mx-auto px-4 py-8">
+<div class="min-h-screen container mx-auto px-4 pt-8 pb-2">
 	<!-- Header -->
 	<header class="flex flex-col md:flex-row justify-between items-center mb-8">
 		<h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4 md:mb-0">
@@ -360,7 +357,7 @@
 			</div>
 		</div>
 
-		<div class="flex justify-center items-center space-x-4 mb-4">
+		<div class="flex justify-center items-center space-x-4 mb-2">
 			<button
 				class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
 			>
