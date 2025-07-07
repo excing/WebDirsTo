@@ -100,7 +100,7 @@
 						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
 						border border-gray-200 dark:border-gray-700
 						hover:border-gray-300 dark:hover:border-gray-600 flex-col space-y-2">
-						<div class="relative overflow-hidden py-1 rounded-sm font-light text-center text-5xl text-gray-500 dark:text-gray-300">+</div>
+						<div class="relative overflow-hidden py-1 rounded-sm font-light text-center text-md sm:text-5xl text-gray-500 dark:text-gray-300">+</div>
 					</div>
 				</button>
 			{/if}
