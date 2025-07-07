@@ -28,6 +28,8 @@
 		helpText
 	}: Props = $props();
 
+	let showRemove = $state(false);
+
 	// 限制显示的网站数量
 	const displaySites = $derived(maxItems ? sites.slice(0, maxItems) : sites);
 
@@ -42,7 +44,7 @@
 
 {#if displaySites.length > 0}
 	<section class="mb-12">
-		<h2 class="text-2xl font-bold mb-4 flex items-center">
+		<h2 class="flex text-2xl font-bold mb-4 flex items-center">
 			<svg 
 				xmlns="http://www.w3.org/2000/svg" 
 				width="24" 
@@ -58,7 +60,16 @@
 				<path d={iconPaths[icon]}/>
 			</svg>
 			{title}
-			<span class="ml-2 text-sm text-gray-500 dark:text-gray-400">({displaySites.length})</span>
+			<span class="flex-1 ml-2 text-sm text-gray-500 dark:text-gray-400">({displaySites.length})</span>
+			{#if onRemove}
+				<!-- 为 button 添加 seo 友好, 无障碍的交互样式 -->
+				<button 
+					class="ml-4 px-2 py-1 rounded-sm text-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 "
+					onclick={() => showRemove = !showRemove}
+				>
+					{showRemove ? '取消' : '管理'}
+				</button>
+			{/if}
 		</h2>
 		
 		<!-- 响应式网格布局 -->
@@ -68,7 +79,7 @@
 					{site}
 					onVisit={onVisit ? () => onVisit(site) : undefined}
 					onRemove={onRemove ? () => onRemove(site) : undefined}
-					showRemove={false}
+					{showRemove}
 				/>
 			{/each}
 		</div>
@@ -78,6 +89,13 @@
 			<div class="mt-4 text-center">
 				<p class="text-sm text-gray-500 dark:text-gray-400">
 					显示前 {maxItems} 个，共 {sites.length} 个{title}
+					<!-- 显示全部 -->
+					<button 
+						class="text-blue-500 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-700"
+						onclick={() => maxItems = sites.length}
+					>
+						显示全部
+					</button>
 				</p>
 			</div>
 		{/if}

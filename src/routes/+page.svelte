@@ -279,7 +279,7 @@
 			iconColor="text-orange-500"
 			onVisit={handleSiteVisit}
 			onRemove={removeSiteVisit}
-			maxItems={2}
+			maxItems={10}
 		/>
 
 		<!-- 用户收藏网站 -->
@@ -290,6 +290,7 @@
 			iconColor="text-red-500"
 			onVisit={handleSiteVisit}
 			onRemove={toggleStarred}
+			maxItems={10}
 		/>
 		<!-- 置顶推荐 - 服务端渲染 -->
 		{#if starredSites.length > 0}
