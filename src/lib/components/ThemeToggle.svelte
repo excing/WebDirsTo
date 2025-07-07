@@ -6,10 +6,10 @@
 	onMount(() => {
 		// 检查本地存储或系统偏好
 		if (typeof window !== 'undefined') {
-			const stored = localStorage.getItem('color-theme');
+			// const stored = localStorage.getItem('color-theme');
 			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			
-			isDark = stored === 'dark' || (!stored && prefersDark);
+			isDark = prefersDark;
 			updateTheme();
 		}
 	});
