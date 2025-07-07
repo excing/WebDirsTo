@@ -22,6 +22,10 @@
     }: Props = $props();
 
     function handleVisit(event: Event) {
+        if (showRemove) {
+            handleRemove(event);
+            return;
+        }
 		event.preventDefault();
 		if (onVisit) {
 			onVisit(site);
