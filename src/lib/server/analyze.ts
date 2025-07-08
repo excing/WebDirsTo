@@ -126,20 +126,24 @@ async function checkPwaSupport(url: string): Promise<boolean> {
 }
 
 export async function analyzeURL(url: string) {
+    const urlObj = new URL(url);
+    // 首先检测HTTPS支持
+    let supportsHttps = true;
+    let fetchResponse;
     try {
-        // 首先检测HTTPS支持
-        let supportsHttps = true;
-        const urlObj = new URL(url);
         const httpsUrl = `https://${urlObj.host}${urlObj.pathname}${urlObj.search}`;
-        let fetchResponse = await request(httpsUrl, {
+        fetchResponse = await request(httpsUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; WebWhereGo/1.0;)'
             },
             signal: AbortSignal.timeout(10000) // 10秒超时
         });
-
         supportsHttps = fetchResponse.ok;
+    } catch {
+        supportsHttps = false;
+    }
 
+    try {
         // 根据HTTPS支持情况决定使用哪个URL进行分析
         let analysisUrl = url;
         if (!supportsHttps) {
@@ -156,6 +160,10 @@ export async function analyzeURL(url: string) {
             if (!fetchResponse.ok) {
                 throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
             }
+        }
+
+        if (!fetchResponse) {
+            throw new Error('获取网站信息失败');
         }
 
         const html = await fetchResponse.text();
