@@ -1,3 +1,4 @@
+import type { Todo } from "$lib/types";
 
 /**
  * 从 User-Agent 解析操作系统信息
@@ -43,7 +44,13 @@ export function todo(url: string, ip: string, request: Request) {
     const submittedAt = new Date().toISOString();
     const status = "pending";
 
-    const todoItem = `"${url}","${realip}","${language}","${os}","${browser}","${submittedAt}","${status}"\n`;
-
-    return todoItem;
+    return {
+        url,
+        ip: realip,
+        language,
+        os,
+        browser,
+        submittedAt,
+        status
+    } as Todo;
 }

@@ -191,7 +191,7 @@ export async function analyzeURL(url: string) {
         // 最后归档
 
         const text = geminiResult ? geminiResult.content.parts[0].text : '';
-        console.log(text);
+        // console.log(text);
 
         const matches = text.match(/```[a-zA-Z]*\s*([\s\S]*?)\s*```/);
         const filteredText = matches ? matches[1].trim() : text.trim();

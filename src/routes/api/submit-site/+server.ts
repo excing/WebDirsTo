@@ -4,7 +4,7 @@ import { analyzeURL } from '$lib/server/analyze';
 import { verifyAdminApiAccess } from '$lib/server/auth';
 import { todo } from '$lib/server/todo';
 import { createGitHubService } from '$lib/server/github';
-import { serializeSites } from '$lib/conv';
+import { serializeSites, serializeTodo } from '$lib/conv';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
 	try {
@@ -42,18 +42,18 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 
 		if (!auth.isAuthorized) {
 			const todoItem = todo(url, getClientAddress(), request);
-			console.log('todoItem:', todoItem);
+			// console.log('todoItem:', todoItem);
 			const todoContents = await github.getFileContents('todo.csv');
-			console.log('todoContent:', todoContents.content);
-			const todoContent = `${todoContents.content}\n${todoItem}`;
-			await github.updateFile('todo.csv', todoContent, 'Add todo item', todoContents.sha);
+			// console.log('todoContent:', todoContents.content);
+			const todoContent = `${todoContents.content}\n${serializeTodo([todoItem])}`;
+			await github.updateFile('todo.csv', todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
 		} else {
 			const analysisResult = await analyzeURL(url);
-			console.log('分析结果:', analysisResult);
+			// console.log('分析结果:', analysisResult);
 			const sitesContents = await github.getFileContents('sites.txt');
-			console.log('sitesContents:', sitesContents.content);
+			// console.log('sitesContents:', sitesContents.content);
 			const sitesContent = `${sitesContents.content}\n\n${serializeSites([analysisResult])}`;
-			await github.updateFile('sites.txt', sitesContent, 'Add todo item', sitesContents.sha);
+			await github.updateFile('sites.txt', sitesContent, `Add ${analysisResult.title} site`, sitesContents.sha);
 		}
 
 		// 返回成功响应
