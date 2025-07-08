@@ -1,9 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { env } from '$env/dynamic/private';
 import type { ApiResponse, AdminCredentials, AdminSession } from '$lib/types.js';
-import { dev } from '$app/environment';
 import { ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
+import { AdminAuthService } from '$lib/server/auth.js';
 
 /**
  * POST /api/admin/auth - 管理员登录
@@ -11,73 +10,44 @@ import { ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
 export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     const credentials: AdminCredentials = await request.json();
-    
-    // 验证必填字段
-    if (!credentials.username || !credentials.password) {
+
+    // 使用认证服务验证凭据
+    const validation = AdminAuthService.validateCredentials(credentials);
+
+    if (!validation.isValid) {
+      const statusCode = validation.error === '服务器配置错误' ? 500 :
+                        validation.error === '用户名和密码是必填字段' ? 400 : 401;
+
       const response: ApiResponse<never> = {
         success: false,
-        error: ERROR_CODES.VALIDATION_ERROR,
-        message: '用户名和密码是必填字段'
+        error: statusCode === 400 ? ERROR_CODES.VALIDATION_ERROR :
+               statusCode === 500 ? ERROR_CODES.FETCH_FAILED : ERROR_CODES.UNAUTHORIZED,
+        message: validation.error
       };
-      return json(response, { status: 400 });
+      return json(response, { status: statusCode });
     }
-    
-    // 验证凭据
-    const adminUsername = env.ADMIN_USERNAME;
-    const adminPassword = env.ADMIN_PASSWORD;
-    
-    if (!adminUsername || !adminPassword) {
-      console.error('Admin credentials not configured in environment variables');
-      const response: ApiResponse<never> = {
-        success: false,
-        error: ERROR_CODES.FETCH_FAILED,
-        message: '服务器配置错误'
-      };
-      return json(response, { status: 500 });
-    }
-    
-    if (credentials.username !== adminUsername || credentials.password !== adminPassword) {
-      const response: ApiResponse<never> = {
-        success: false,
-        error: ERROR_CODES.UNAUTHORIZED,
-        message: '用户名或密码错误'
-      };
-      return json(response, { status: 401 });
-    }
-    
-    // 创建会话
-    const session: AdminSession = {
-      isAuthenticated: true,
-      username: credentials.username,
-      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24小时后过期
-    };
-    
-    // 设置安全的HTTP-only cookie
-    cookies.set('admin-session', JSON.stringify(session), {
-      httpOnly: true,
-      secure: !dev,
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60, // 24小时
-      path: '/'
-    });
-    
+
+    // 创建会话并设置 Cookie
+    const session = AdminAuthService.createSession(credentials.username);
+    AdminAuthService.setSessionCookie(cookies, session);
+
     const response: ApiResponse<{ username: string }> = {
       success: true,
       data: { username: credentials.username },
       message: '登录成功'
     };
-    
+
     return json(response);
-    
+
   } catch (error) {
     console.error('Error during admin authentication:', error);
-    
+
     const response: ApiResponse<never> = {
       success: false,
       error: ERROR_CODES.FETCH_FAILED,
       message: ERROR_MESSAGES[ERROR_CODES.FETCH_FAILED]
     };
-    
+
     return json(response, { status: 500 });
   }
 };
@@ -87,58 +57,29 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
  */
 export const GET: RequestHandler = async ({ cookies }) => {
   try {
-    const sessionCookie = cookies.get('admin-session');
-    
-    if (!sessionCookie) {
-      const response: ApiResponse<AdminSession> = {
-        success: true,
-        data: { isAuthenticated: false }
-      };
-      return json(response);
-    }
-    
-    let session: AdminSession;
-    try {
-      session = JSON.parse(sessionCookie);
-    } catch {
-      // Cookie格式错误，清除cookie
-      cookies.delete('admin-session', { path: '/' });
-      const response: ApiResponse<AdminSession> = {
-        success: true,
-        data: { isAuthenticated: false }
-      };
-      return json(response);
-    }
-    
-    // 检查会话是否过期
-    if (session.expiresAt && Date.now() > session.expiresAt) {
-      cookies.delete('admin-session', { path: '/' });
-      const response: ApiResponse<AdminSession> = {
-        success: true,
-        data: { isAuthenticated: false }
-      };
-      return json(response);
-    }
-    
+    // 使用认证服务检查会话状态
+    const sessionStatus = AdminAuthService.getSessionStatus(cookies);
+
     const response: ApiResponse<AdminSession> = {
       success: true,
       data: {
-        isAuthenticated: true,
-        username: session.username
+        isAuthenticated: sessionStatus.isAuthenticated,
+        username: sessionStatus.username,
+        expiresAt: sessionStatus.expiresAt
       }
     };
-    
+
     return json(response);
-    
+
   } catch (error) {
     console.error('Error checking admin session:', error);
-    
+
     const response: ApiResponse<never> = {
       success: false,
       error: ERROR_CODES.FETCH_FAILED,
       message: ERROR_MESSAGES[ERROR_CODES.FETCH_FAILED]
     };
-    
+
     return json(response, { status: 500 });
   }
 };
@@ -148,24 +89,25 @@ export const GET: RequestHandler = async ({ cookies }) => {
  */
 export const DELETE: RequestHandler = async ({ cookies }) => {
   try {
-    cookies.delete('admin-session', { path: '/' });
-    
+    // 使用认证服务清除会话
+    AdminAuthService.clearSession(cookies);
+
     const response: ApiResponse<never> = {
       success: true,
       message: '登出成功'
     };
-    
+
     return json(response);
-    
+
   } catch (error) {
     console.error('Error during admin logout:', error);
-    
+
     const response: ApiResponse<never> = {
       success: false,
       error: ERROR_CODES.FETCH_FAILED,
       message: ERROR_MESSAGES[ERROR_CODES.FETCH_FAILED]
     };
-    
+
     return json(response, { status: 500 });
   }
 };
