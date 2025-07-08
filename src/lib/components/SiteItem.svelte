@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getFallbackFavicon } from "$lib/tools.js";
     import type { Site } from "../types.js";
+    import Item from "./Item.svelte";
     import LazyImage from "./LazyImage.svelte";
 
     interface Props {
@@ -47,13 +48,7 @@
 <!-- 右上角显示移除按钮(减号样式), 点击后通知调用者 -->
 <div class="site-item relative group" data-title={site.title} data-url={site.url}>
     <a href={site.url} target="_blank" onclick={handleVisit} class="block">
-        <div class="flex items-center px-1 py-3 rounded-lg transition-all duration-200
-                   bg-white dark:bg-gray-800
-                   hover:bg-gray-50 dark:hover:bg-gray-700
-                   hover:shadow-md dark:hover:shadow-gray-900/50
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
-                   border border-gray-200 dark:border-gray-700
-                   hover:border-gray-300 dark:hover:border-gray-600 {layout === "vertical" ? "flex-col space-y-2" : "flex-row space-x-2"}">
+        <Item {layout}>
             <!-- 使用 LazyImage 组件 -->
              <LazyImage
                 src={site.favicon}
@@ -68,7 +63,7 @@
             {:else}
                 <p class="font-bold flex-1 truncate overflow-hidden whitespace-nowrap hidden sm:block">{site.title}</p>
             {/if}
-        </div>
+        </Item>
     </a>
 
     <!-- 移除按钮 - 右上角显示 -->

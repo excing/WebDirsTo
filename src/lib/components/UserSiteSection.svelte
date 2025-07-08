@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Site } from '../types.js';
+    import Item from './Item.svelte';
 	import SiteItem from './SiteItem.svelte';
 
 	interface Props {
@@ -9,7 +10,7 @@
 		iconColor?: string;
 		onVisit?: (site: Site) => void;
 		onRemove?: (site: Site) => void;
-		onAdd?: (url: string) => void;
+		onAdd?: () => void;
 		maxItems?: number;
 		emptyMessage?: string;
 		showEmptyState?: boolean;
@@ -44,10 +45,7 @@
 	};
 
 	function onAddUrl() {
-		const url = prompt('请输入网站 URL:');
-		if (url) {
-			onAdd?.(url);
-		}
+		onAdd?.();
 	}
 </script>
 
@@ -93,15 +91,9 @@
 			{/each}
 			{#if onAdd}
 				<button class="site-item relative group block" onclick={onAddUrl}>
-					<div  class="flex items-center px-1 py-3 rounded-lg transition-all duration-200
-						bg-white dark:bg-gray-800
-						hover:bg-gray-50 dark:hover:bg-gray-700
-						hover:shadow-md dark:hover:shadow-gray-900/50
-						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
-						border border-gray-200 dark:border-gray-700
-						hover:border-gray-300 dark:hover:border-gray-600 flex-col space-y-2">
-						<div class="relative overflow-hidden py-1 rounded-sm font-light text-center text-md sm:text-5xl text-gray-500 dark:text-gray-300">+</div>
-					</div>
+					<Item>
+						<div class="relative overflow-hidden py-1 rounded-sm font-bold sm:font-light text-center text-md sm:text-5xl text-gray-500 dark:text-gray-300">+</div>
+					</Item>
 				</button>
 			{/if}
 		</div>

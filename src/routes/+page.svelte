@@ -6,6 +6,7 @@
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import PerformanceMonitor from '$lib/components/PerformanceMonitor.svelte';
 	import UserSiteSection from '$lib/components/UserSiteSection.svelte';
+	import SubmitSiteModal from '$lib/components/SubmitSiteModal.svelte';
 	import type { Site } from '$lib/types.js';
 	import type { PageData } from './$types';
 
@@ -118,6 +119,10 @@
 	let userStarredSites = $state<string[]>([]);
 	let userFrequentSites = $state<Site[]>([]);
 	let userStarredSiteObjects = $state<Site[]>([]);
+
+	// 提交网站模态框状态
+	let showSubmitModal = $state(false);
+	let hasAddToFrequentSites = $state(false);
 
 	onMount(() => {
 		// 只在浏览器环境中执行
@@ -266,6 +271,38 @@
 		}
 		updateFilteredSites();
 	}
+
+	// 打开提交网站模态框
+	function openAddFrequentSiteModal() {
+		showSubmitModal = true;
+		hasAddToFrequentSites = true;
+	}
+
+	// 打开提交网站模态框
+	function openSubmitModal() {
+		showSubmitModal = true;
+		hasAddToFrequentSites = false;
+	}
+
+	// 关闭提交网站模态框
+	function closeSubmitModal() {
+		showSubmitModal = false;
+	}
+
+	// 处理网站提交
+	function handleSiteSubmit(data: { url: string; hasAddToFrequentSites: boolean; successed: boolean }) {
+		const { url, hasAddToFrequentSites, successed } = data;
+
+		if (hasAddToFrequentSites) {
+			// 添加到常用网站
+			handleAddFrequentUrl(url);
+		}
+
+		// 显示成功消息
+		if (successed) {
+			alert('网站提交成功！');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -315,7 +352,7 @@
 			iconColor="text-orange-500"
 			onVisit={handleSiteVisit}
 			onRemove={removeSiteVisit}
-			onAdd={handleAddFrequentUrl}
+			onAdd={openAddFrequentSiteModal}
 			maxItems={9}
 		/>
 
@@ -399,6 +436,7 @@
 
 		<div class="flex justify-center items-center space-x-4 mb-2">
 			<button
+				onclick={openSubmitModal}
 				class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
 			>
 				提交网站
@@ -432,3 +470,11 @@
 		 <PerformanceMonitor />
 	 {/if}
 </div>
+
+<!-- 提交网站模态框 -->
+<SubmitSiteModal
+	isOpen={showSubmitModal}
+	{hasAddToFrequentSites}
+	onclose={closeSubmitModal}
+	onsubmit={handleSiteSubmit}
+/>
