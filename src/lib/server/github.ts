@@ -9,7 +9,13 @@ export class GitHubService {
     private owner: string;
     private repo: string;
     private baseUrl = 'https://api.github.com';
-    private rawUrl = 'https://raw.githubusercontent.com';
+    private rawUrls = [
+        'https://gcore.jsdelivr.net/gh',
+        // 'https://raw.githubusercontent.com',
+        'https://cdn.jsdelivr.net/gh',
+        'https://testingcf.jsdelivr.net/gh',
+        'https://quantil.jsdelivr.net/gh',
+    ];
 
     constructor(token: string, owner: string, repo: string) {
         this.token = token;
@@ -41,12 +47,10 @@ export class GitHubService {
      * 获取raw文件内容
      */
     async getRawFileContent(path: string): Promise<string> {
-        if (dev) {
-            return this.getFileContent(path);
-        }
         try {
             // https://cdn.jsdelivr.net/gh/excing/testnote/todo.cvs
-            const rawUrl = `${this.rawUrl}/${this.owner}/${this.repo}/refs/heads/main/${path}`;
+            const rawBaseUrl = dev ? this.rawUrls[0] : this.rawUrls[Math.floor(Math.random() * this.rawUrls.length)];
+            const rawUrl = `${rawBaseUrl}/${this.owner}/${this.repo}/${path}`;
 
             const file = await request(rawUrl)
             const content = await file.text();
@@ -57,25 +61,6 @@ export class GitHubService {
                 // 文件不存在，返回空内容
                 return '';
             }
-            throw error;
-        }
-    }
-
-    /**
-     * 获取文件内容
-     */
-    async getFileContent(path: string): Promise<string> {
-        try {
-            const file = await this.api<GitHubFile>(
-                `/repos/${this.owner}/${this.repo}/contents/${path}`
-            );
-
-            const content = file.encoding === 'base64'
-                ? decode64(file.content)
-                : file.content;
-
-            return content;
-        } catch (error) {
             throw error;
         }
     }
