@@ -1,16 +1,18 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { analyzeURL } from '$lib/server/analyze';
+import { verifyAdminApiAccess } from '$lib/server/auth';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
 		const { url } = await request.json();
 
 		// 验证输入
 		if (!url || typeof url !== 'string') {
 			return json(
-				{ 
-					success: false, 
-					error: '请提供有效的网址' 
+				{
+					success: false,
+					error: '请提供有效的网址'
 				},
 				{ status: 400 }
 			);
@@ -24,25 +26,23 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		} catch {
 			return json(
-				{ 
-					success: false, 
-					error: '请提供有效的网址格式' 
+				{
+					success: false,
+					error: '请提供有效的网址格式'
 				},
 				{ status: 400 }
 			);
 		}
 
-		// 这里可以添加更多的验证逻辑，比如：
-		// - 检查 URL 是否可访问
-		// - 检查是否已经存在
-		// - 获取网站基本信息（标题、描述等）
-		// - 保存到数据库或文件
+		const auth = verifyAdminApiAccess(cookies);
 
-		// 模拟处理时间
-		await new Promise(resolve => setTimeout(resolve, 500));
-
-		// 记录提交信息（在实际应用中，这里应该保存到数据库）
-		console.log(`网站提交请求: ${url} at ${new Date().toISOString()}`);
+		if (!auth.isAuthorized) {
+			// 记录提交信息（在实际应用中，这里应该保存到数据库）
+			console.log(`网站提交请求: ${url} at ${new Date().toISOString()}`);
+		} else {
+			const analysisResult = await analyzeURL(url);
+			console.log('分析结果:', analysisResult);
+		}
 
 		// 返回成功响应
 		return json({
@@ -57,11 +57,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	} catch (error) {
 		console.error('提交网站失败:', error);
-		
+
 		return json(
-			{ 
-				success: false, 
-				error: '服务器错误，请稍后重试' 
+			{
+				success: false,
+				error: '服务器错误，请稍后重试'
 			},
 			{ status: 500 }
 		);
