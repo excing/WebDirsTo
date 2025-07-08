@@ -1,10 +1,13 @@
+import { getScreenshotUrl } from "./tools";
 import type { Site, Todo } from "./types";
 
 // sites.txt 解析为 Site 对象
 export function parseSites(content: string): Site[] {
-    const sites = content.split('\n\n')
-        .map(part => part.split('\n'))
-        .filter(lines => lines.length === 13)
+    const parts = content.split(/\n{2,}/)
+        .map(part => part.trim().split('\n'));
+    console.log(parts);
+
+    const sites = parts.filter(lines => lines.length === 14)
         .map(lines => {
             return {
                 title: stringDef(lines[0], 'Example'),
@@ -19,7 +22,8 @@ export function parseSites(content: string): Site[] {
                 supportsPWA: lines[9] === 'true',
                 supportsHTTPS: lines[10] === 'true',
                 recommendation: stringDef(lines[11], 'None'),
-                createdAt: stringDef(lines[12], new Date().toISOString())
+                createdAt: stringDef(lines[12], new Date().toISOString()),
+                ogImage: stringDef(lines[13], 'https://example.com/image.png')
             } as Site;
         });
 
@@ -32,7 +36,7 @@ export function serializeSites(sites: Site[]): string {
     return sites.map(site => [
         stringDef(site.title, 'Example'),
         stringDef(site.url, 'https://example.com'),
-        stringDef(site.favicon, 'https://example.com/favicon.ico'),
+        stringDef(site.favicon, `https://${site.url}/favicon.ico`),
         stringDef(site.description, 'None'),
         stringDef(site.category, 'Other'),
         site.tags.join(',') || 'other',
@@ -42,7 +46,8 @@ export function serializeSites(sites: Site[]): string {
         site.supportsPWA ? 'true' : 'false',
         site.supportsHTTPS ? 'true' : 'false',
         stringDef(site.recommendation, 'None'),
-        stringDef(site.createdAt, new Date().toISOString())
+        stringDef(site.createdAt, new Date().toISOString()),
+        stringDef(site.ogImage, getScreenshotUrl(site.url))
     ].join('\n')).join('\n\n');
 }
 

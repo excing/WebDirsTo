@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getFallbackFavicon, getFallbackScreenshot, getScreenshotUrl } from '$lib/tools.js';
+    import { getFallbackFavicon, getScreenshotUrl } from '$lib/tools.js';
 	import type { Site } from '../types.js';
 	import LazyImage from './LazyImage.svelte';
 
@@ -33,9 +33,9 @@
 <div class="site-card" data-title={site.title} data-tags={site.tags.join(',')}>
 	<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl dark:shadow-gray-950/50 transition-all duration-300 overflow-hidden group relative">
 		<LazyImage
-			src={getScreenshotUrl(site.url)}
+			src={site.ogImage}
 			alt="{site.title} Screenshot"
-			fallback={getFallbackScreenshot(site.url)}
+			fallback={getScreenshotUrl(site.url)}
 			class="screenshot-img transition-transform duration-300 group-hover:scale-105"
 			loading={priority ? 'eager' : 'lazy'}
 		/>

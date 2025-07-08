@@ -1,46 +1,21 @@
+import { parseSites } from '$lib/conv';
 import type { Site } from '$lib/types.js';
+import { createGitHubService } from './github';
 
 // 获取网站数据
 export async function fetchSitesFromSource(): Promise<Site[]> {
-	// 直接使用本地示例数据
-	const { sampleSites } = await import('$lib/data.js');
-	return sampleSites;
-}
-
-// 解析sites.txt格式的数据
-export function parseSitesData(content: string): Site[] {
-	const sites: Site[] = [];
-	const lines = content.split('\n').filter(line => line.trim() !== '');
+	const github = createGitHubService();
+	const content = await github.getRawFileContent('sites.txt');
+	// console.log(content);
 	
-	// 每个网站占13行
-	for (let i = 0; i < lines.length; i += 13) {
-		if (i + 12 < lines.length) {
-			const site: Site = {
-				title: lines[i],
-				url: lines[i + 1],
-				favicon: lines[i + 2],
-				description: lines[i + 3],
-				category: lines[i + 4],
-				tags: lines[i + 5].split(',').map(tag => tag.trim()),
-				ageRating: lines[i + 6] as 'SFW' | '18+',
-				language: lines[i + 7],
-				starred: lines[i + 8] === '1',
-				supportsPWA: lines[i + 9] === 'true',
-				supportsHTTPS: lines[i + 10] === 'true',
-				recommendation: lines[i + 11],
-				createdAt: lines[i + 12]
-			};
-			sites.push(site);
-		}
-	}
-	
+	const sites = parseSites(content);
 	return sites;
 }
 
 // 生成sitemap数据
 export function generateSitemap(sites: Site[]): string {
 	const baseUrl = 'https://your-domain.com'; // 在实际应用中从环境变量获取
-	
+
 	const urls = sites.map(site => `
 		<url>
 			<loc>${baseUrl}/site/${encodeURIComponent(site.url)}</loc>
@@ -49,7 +24,7 @@ export function generateSitemap(sites: Site[]): string {
 			<priority>0.8</priority>
 		</url>
 	`).join('');
-	
+
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>

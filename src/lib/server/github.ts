@@ -10,9 +10,9 @@ export class GitHubService {
     private repo: string;
     private baseUrl = 'https://api.github.com';
     private rawUrls = [
-        'https://gcore.jsdelivr.net/gh',
-        // 'https://raw.githubusercontent.com',
+        'https://raw.githubusercontent.com',
         'https://cdn.jsdelivr.net/gh',
+        'https://gcore.jsdelivr.net/gh',
         'https://testingcf.jsdelivr.net/gh',
         'https://quantil.jsdelivr.net/gh',
     ];
@@ -49,8 +49,13 @@ export class GitHubService {
     async getRawFileContent(path: string): Promise<string> {
         try {
             // https://cdn.jsdelivr.net/gh/excing/testnote/todo.cvs
-            const rawBaseUrl = dev ? this.rawUrls[0] : this.rawUrls[Math.floor(Math.random() * this.rawUrls.length)];
-            const rawUrl = `${rawBaseUrl}/${this.owner}/${this.repo}/${path}`;
+            // https://github.com/excing/testnote/raw/refs/heads/main/sites.txt
+            const min = dev ? 2 : 0;
+            const index = Math.floor(Math.random() * (this.rawUrls.length - min)) + min;
+            const rawBaseUrl = this.rawUrls[index];
+            const rawUrl = rawBaseUrl === this.rawUrls[0]
+                ? `${rawBaseUrl}/${this.owner}/${this.repo}/raw/refs/heads/main/${path}`
+                : `${rawBaseUrl}/${this.owner}/${this.repo}/${path}`;
 
             const file = await request(rawUrl)
             const content = await file.text();

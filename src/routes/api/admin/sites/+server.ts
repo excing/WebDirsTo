@@ -78,25 +78,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
     // 这里应该实现添加网站的逻辑
     // 目前只是模拟响应
-    const newSite: Site = {
-      title: siteData.title,
-      url: siteData.url,
-      favicon: siteData.favicon || '',
-      description: siteData.description || '',
-      category: siteData.category || '其他',
-      tags: siteData.tags || [],
-      ageRating: siteData.ageRating || 'SFW',
-      language: siteData.language || 'zh-CN',
-      starred: false,
-      supportsPWA: siteData.supportsPWA || false,
-      supportsHTTPS: siteData.supportsHTTPS || false,
-      recommendation: siteData.recommendation || '',
-      createdAt: new Date().toISOString()
-    };
 
     const response: ApiResponse<Site> = {
       success: true,
-      data: newSite,
       message: '网站添加成功'
     };
     

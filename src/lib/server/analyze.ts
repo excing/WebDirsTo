@@ -10,6 +10,7 @@ function extractMetadata(html: string, url: string) {
         title: '',
         description: '',
         favicon: '',
+        ogImage: '',
         hasManifestInHtml: false
     };
 
@@ -55,6 +56,13 @@ function extractMetadata(html: string, url: string) {
         // 默认favicon路径
         const urlObj = new URL(url);
         metadata.favicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
+    }
+
+    // 提取 open graph image
+    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
+        html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["'][^>]*>/i);
+    if (ogImageMatch) {
+        metadata.ogImage = ogImageMatch[1].trim();
     }
 
     // 检查HTML中是否有manifest链接
@@ -210,6 +218,7 @@ export async function analyzeURL(url: string) {
             tags,
             language,
             favicon: metadata.favicon,
+            ogImage: metadata.ogImage,
             supportsPWA: supportsPwa,
             supportsHTTPS: supportsHttps,
             starred: false,

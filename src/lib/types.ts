@@ -12,6 +12,7 @@ export interface Site {
 	supportsHTTPS: boolean;
 	recommendation: string;
 	createdAt: string;
+	ogImage: string;
 }
 
 export interface Todo {

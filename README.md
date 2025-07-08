@@ -134,7 +134,7 @@ todo.csv: (新增) 存储用户提交、待管理员审核的网站数据。
 
 3.2. 数据结构
 sites.txt / 404.txt
-每个网站存储为连续的 13 行文本，结构如下：
+每个网站存储为连续的 14 行文本，结构如下：
 
 line 0: 标题 (e.g., Google)
 line 1: 网址 (e.g., https://www.google.com)
@@ -149,6 +149,7 @@ line 9: 是否支持 PWA (e.g., true 或 false)
 line 10: 是否支持 HTTPS (e.g., true 或 false)
 line 11: 推荐语
 line 12: 上架时间 (e.g., 2025-07-06T12:34:56Z)
+line 13: og image
 
 注意: 两条网站数据之间用一个空行分隔。
 
