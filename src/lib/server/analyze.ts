@@ -177,7 +177,7 @@ export async function analyzeURL(url: string) {
 
         // 检测PWA支持
         // 如果不支持 https, 那么就不检查 pwa
-        const supportsPwa = supportsHttps && (metadata.hasManifestInHtml || await checkPwaSupport(analysisUrl));
+        const supportsPwa = supportsHttps && metadata.hasManifestInHtml;
 
         // 自动分类
         const geminiResult = await gemini([
