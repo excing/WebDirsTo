@@ -11,3 +11,15 @@ export function getScreenshotUrl(url: string): string {
 export function getFallbackScreenshot(url: string): string {
     return `https://image.thum.io/get/maxAge/12/width/700/${url}`;
 }
+
+// 用于 github 内容解码使用, 主要是中文
+export function decode64(text: string): string {
+    return new TextDecoder().decode(
+        Uint8Array.from(atob(text), (c) => c.charCodeAt(0)),
+    );
+}
+
+export function encode64(text: string): string {
+    return btoa(unescape(encodeURIComponent(text)))
+    // return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+}

@@ -2,8 +2,11 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { analyzeURL } from '$lib/server/analyze';
 import { verifyAdminApiAccess } from '$lib/server/auth';
+import { todo } from '$lib/server/todo';
+import { createGitHubService } from '$lib/server/github';
+import { serializeSites } from '$lib/conv';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
 	try {
 		const { url } = await request.json();
 
@@ -35,13 +38,22 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		}
 
 		const auth = verifyAdminApiAccess(cookies);
+		const github = createGitHubService();
 
 		if (!auth.isAuthorized) {
-			// 记录提交信息（在实际应用中，这里应该保存到数据库）
-			console.log(`网站提交请求: ${url} at ${new Date().toISOString()}`);
+			const todoItem = todo(url, getClientAddress(), request);
+			console.log('todoItem:', todoItem);
+			const todoContents = await github.getFileContents('todo.csv');
+			console.log('todoContent:', todoContents.content);
+			const todoContent = `${todoContents.content}\n${todoItem}`;
+			await github.updateFile('todo.csv', todoContent, 'Add todo item', todoContents.sha);
 		} else {
 			const analysisResult = await analyzeURL(url);
 			console.log('分析结果:', analysisResult);
+			const sitesContents = await github.getFileContents('sites.txt');
+			console.log('sitesContents:', sitesContents.content);
+			const sitesContent = `${sitesContents.content}\n\n${serializeSites([analysisResult])}`;
+			await github.updateFile('sites.txt', sitesContent, 'Add todo item', sitesContents.sha);
 		}
 
 		// 返回成功响应

@@ -1,4 +1,5 @@
 import { request } from "$lib/fetch";
+import type { Site } from "$lib/types";
 import { gemini } from "./gemini";
 
 /**
@@ -192,7 +193,7 @@ export async function analyzeURL(url: string) {
         const text = geminiResult ? geminiResult.content.parts[0].text : '';
         console.log(text);
 
-        const matches = text.match(/```[a-zA-Z]+\s*([\s\S]*?)\s*```/);
+        const matches = text.match(/```[a-zA-Z]*\s*([\s\S]*?)\s*```/);
         const filteredText = matches ? matches[1].trim() : text.trim();
         const lines = filteredText.split('\n').map(line => line.split(':').pop() || line.trim());
         const category = lines[0] ? lines[0].trim() : '未分类';
@@ -202,16 +203,19 @@ export async function analyzeURL(url: string) {
         // 组合所有分析结果
         const analysisResult = {
             title: metadata.title,
-            url: url,
+            url: analysisUrl,
             description: metadata.description,
             category,
             ageRating,
             tags,
             language,
             favicon: metadata.favicon,
-            https: supportsHttps,
-            pwa: supportsPwa // 如果检测到manifest文件或HTML中有manifest链接
-        };
+            supportsPWA: supportsPwa,
+            supportsHTTPS: supportsHttps,
+            starred: false,
+            recommendation: 'None',
+            createdAt: new Date().toISOString()
+        } as Site;
 
         return analysisResult;
     } catch (e) {

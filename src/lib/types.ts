@@ -14,6 +14,16 @@ export interface Site {
 	createdAt: string;
 }
 
+export interface Todo {
+	url: string;
+	ip: string;
+	language: string;
+	os: string;
+	browser: string;
+	submittedAt: string;
+	status: 'pending' | 'approved' | 'rejected';
+}
+
 export interface SiteCardProps {
 	site: Site;
 	onFavorite?: (site: Site) => void;
@@ -28,6 +38,21 @@ export interface ThemeState {
 	isDark: boolean;
 }
 
+
+// GitHub API 相关类型
+export interface GitHubFile {
+	name: string;
+	path: string;
+	sha: string;
+	size: number;
+	url: string;
+	html_url: string;
+	git_url: string;
+	download_url: string;
+	type: string;
+	content: string;
+	encoding: string;
+}
 
 // API 响应类型
 export interface ApiResponse<T> {
