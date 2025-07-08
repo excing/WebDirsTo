@@ -4,7 +4,8 @@ import { analyzeURL } from '$lib/server/analyze';
 import { verifyAdminApiAccess } from '$lib/server/auth';
 import { todo } from '$lib/server/todo';
 import { createGitHubService } from '$lib/server/github';
-import { serializeSites, serializeTodo } from '$lib/conv';
+import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
+import { isSameUrl } from '$lib/url';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
 	try {
@@ -45,6 +46,17 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 			// console.log('todoItem:', todoItem);
 			const todoContents = await github.getFileContents('todo.csv');
 			// console.log('todoContent:', todoContents.content);
+			// 验证 todoItem 是否已经存在 todo.csv 中
+			const todos = parseTodo(todoContents.content);
+			if (todos.some(todo => isSameUrl(todo.url, todoItem.url))) {
+				return json(
+					{
+						success: false,
+						error: '该网站已提交，请勿重复提交'
+					},
+					{ status: 400 }
+				);
+			}
 			const todoContent = `${todoContents.content}\n${serializeTodo([todoItem])}`;
 			await github.updateFile('todo.csv', todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
 		} else {
@@ -52,6 +64,17 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 			// console.log('分析结果:', analysisResult);
 			const sitesContents = await github.getFileContents('sites.txt');
 			// console.log('sitesContents:', sitesContents.content);
+			// 验证 analysisResult 是否已经存在 sites.txt 中
+			const sites = parseSites(sitesContents.content);
+			if (sites.some(site => isSameUrl(site.url, analysisResult.url))) {
+				return json(
+					{
+						success: false,
+						error: '该网站已存在，无需重复提交'
+					},
+					{ status: 400 }
+				);
+			}
 			const sitesContent = `${sitesContents.content}\n\n${serializeSites([analysisResult])}`;
 			await github.updateFile('sites.txt', sitesContent, `Add ${analysisResult.title} site`, sitesContents.sha);
 		}

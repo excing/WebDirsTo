@@ -50,7 +50,7 @@ export class GitHubService {
         try {
             // https://cdn.jsdelivr.net/gh/excing/testnote/todo.cvs
             // https://github.com/excing/testnote/raw/refs/heads/main/sites.txt
-            const min = dev ? 2 : 0;
+            const min = dev ? 1 : 0;
             const index = Math.floor(Math.random() * (this.rawUrls.length - min)) + min;
             const rawBaseUrl = this.rawUrls[index];
             const rawUrl = rawBaseUrl === this.rawUrls[0]
