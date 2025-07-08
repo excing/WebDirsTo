@@ -6,6 +6,7 @@ import { todo } from '$lib/server/todo';
 import { createGitHubService } from '$lib/server/github';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
 import { isSameUrl } from '$lib/url';
+import { DATA_FILES } from '$lib/constants';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
 	try {
@@ -44,7 +45,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		if (!auth.isAuthorized) {
 			const todoItem = todo(url, getClientAddress(), request);
 			// console.log('todoItem:', todoItem);
-			const todoContents = await github.getFileContents('todo.csv');
+			const todoContents = await github.getFileContents(DATA_FILES.PENDING);
 			// console.log('todoContent:', todoContents.content);
 			// 验证 todoItem 是否已经存在 todo.csv 中
 			const todos = parseTodo(todoContents.content);
@@ -58,11 +59,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 				);
 			}
 			const todoContent = `${todoContents.content}\n${serializeTodo([todoItem])}`;
-			await github.updateFile('todo.csv', todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
+			await github.updateFile(DATA_FILES.PENDING, todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
 		} else {
 			const analysisResult = await analyzeURL(url);
 			// console.log('分析结果:', analysisResult);
-			const sitesContents = await github.getFileContents('sites.txt');
+			const sitesContents = await github.getFileContents(DATA_FILES.SITES);
 			// console.log('sitesContents:', sitesContents.content);
 			// 验证 analysisResult 是否已经存在 sites.txt 中
 			const sites = parseSites(sitesContents.content);
@@ -76,7 +77,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 				);
 			}
 			const sitesContent = `${sitesContents.content}\n\n${serializeSites([analysisResult])}`;
-			await github.updateFile('sites.txt', sitesContent, `Add ${analysisResult.title} site`, sitesContents.sha);
+			await github.updateFile(DATA_FILES.SITES, sitesContent, `Add ${analysisResult.title} site`, sitesContents.sha);
 		}
 
 		// 返回成功响应

@@ -24,3 +24,10 @@ export const ERROR_MESSAGES = {
     [ERROR_CODES.GITHUB_API_ERROR]: 'GitHub API 错误',
     [ERROR_CODES.RATE_LIMIT_EXCEEDED]: '请求频率过高，请稍后再试'
 } as const;
+
+// 文件名常量
+export const DATA_FILES = {
+    SITES: 'sites.txt',
+    ARCHIVED: '404.txt',
+    PENDING: 'todo.csv'
+} as const;

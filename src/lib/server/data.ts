@@ -1,11 +1,12 @@
 import { parseSites } from '$lib/conv';
 import type { Site } from '$lib/types.js';
 import { createGitHubService } from './github';
+import { DATA_FILES } from '$lib/constants';
 
 // 获取网站数据
 export async function fetchSitesFromSource(): Promise<Site[]> {
 	const github = createGitHubService();
-	const content = await github.getRawFileContent('sites.txt');
+	const content = await github.getRawFileContent(DATA_FILES.SITES);
 	// console.log(content);
 	
 	const sites = parseSites(content);
