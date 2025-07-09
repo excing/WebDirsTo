@@ -59,7 +59,7 @@
 
 	function loadImage() {
 		if (hasError) return;
-		console.log("load image: ", src);
+		// console.log("load image: ", src);
 
 		const img = imgElement;
 		img.onload = () => {
