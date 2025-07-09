@@ -1,12 +1,25 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/constants.js';
-    import { request } from '$lib/fetch';
-  import type { Todo } from '$lib/types.js';
-  import type { PageData } from './$types';
+  import { request } from '$lib/fetch';
+  import type { Site, Todo } from '$lib/types.js';
   import { onMount } from 'svelte';
 
-  export let data: PageData;
+  let data = {
+      session: {
+        username: "admin",
+      },
+      sites: [] as Site[],
+      Todos: [] as Todo[],
+      stats: {
+        totalSites: 0,
+        pendingSubmissions: 0,
+        starredSites: 0,
+        archivedSites: 0,
+        categoryCounts: {}
+      },
+      error: null
+    }
 
   let processingSubmissions = new Set<string>();
   let isLoggingOut = false;
@@ -17,7 +30,7 @@
 
   // 客户端渲染完成后设置加载状态
   onMount(() => {
-    isLoading = false;
+    refreshData();
   });
 
   async function handleLogout() {
@@ -160,6 +173,7 @@
       setTimeout(() => errorMessage = '', 5000);
     } finally {
       isRefreshing = false;
+      isLoading = false;
     }
   }
 
