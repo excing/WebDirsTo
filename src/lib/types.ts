@@ -62,15 +62,3 @@ export interface ApiResponse<T> {
 	error?: string;
 	message?: string;
 }
-
-// 管理员认证
-export interface AdminCredentials {
-	username: string;
-	password: string;
-}
-
-export interface AdminSession {
-	isAuthenticated: boolean;
-	username?: string;
-	expiresAt?: number;
-}
