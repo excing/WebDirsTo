@@ -5,11 +5,11 @@ export function getFallbackFavicon(url: string): string {
 }
 
 export function getScreenshotUrl(url: string): string {
-    const urls = [
-        `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`,
-        `https://image.thum.io/get/maxAge/12/width/700/${url}`
-    ];
-    return urls[Math.floor(Math.random() * urls.length)];
+    return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
+}
+
+export function getFallbackScreenshot(url: string): string {
+    return `https://image.thum.io/get/maxAge/12/width/700/${url}`;
 }
 
 // 用于 github 内容解码使用, 主要是中文

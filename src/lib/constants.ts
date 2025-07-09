@@ -31,3 +31,5 @@ export const DATA_FILES = {
     ARCHIVED: '404.txt',
     PENDING: 'todo.csv'
 } as const;
+
+export const APP_NAME = '探索导航';
