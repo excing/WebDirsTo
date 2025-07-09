@@ -34,20 +34,20 @@ export function parseSites(content: string): Site[] {
     const sites = parts.filter(lines => lines.length === 14)
         .map(lines => {
             return {
-                title: stringEmpty(lines[0], '[title]'),
-                url: stringEmpty(lines[1], '[url]'),
-                favicon: stringEmpty(lines[2], `[favicon]`),
-                description: stringEmpty(lines[3], '[description]'),
-                category: stringEmpty(lines[4], '[category]'),
-                tags: stringEmpty(lines[5], '[tags]').split(',').map(tag => tag.trim()),
-                ageRating: stringEmpty(lines[6], '[ageRating]') as 'SFW' | '18+' || 'SFW',
-                language: stringEmpty(lines[7], '[language]'),
+                title: stringEmpty(lines[0], PLACEHOLDERS.site.title),
+                url: stringEmpty(lines[1], PLACEHOLDERS.site.url),
+                favicon: stringEmpty(lines[2], PLACEHOLDERS.site.favicon),
+                description: stringEmpty(lines[3], PLACEHOLDERS.site.description),
+                category: stringEmpty(lines[4], PLACEHOLDERS.site.category),
+                tags: stringEmpty(lines[5], PLACEHOLDERS.site.tags).split(',').map(tag => tag.trim()),
+                ageRating: stringEmpty(lines[6], PLACEHOLDERS.site.ageRating) as 'SFW' | '18+' || 'SFW',
+                language: stringEmpty(lines[7], PLACEHOLDERS.site.language),
                 starred: lines[8] === '1',
                 supportsPWA: lines[9] === 'true',
                 supportsHTTPS: lines[10] === 'true',
-                recommendation: stringEmpty(lines[11], '[recommendation]'),
-                createdAt: stringDef(lines[12], new Date().toISOString()),
-                ogImage: stringEmpty(lines[13], '[ogImage]')
+                recommendation: stringEmpty(lines[11], PLACEHOLDERS.site.recommendation),
+                createdAt: stringEmpty(lines[12], PLACEHOLDERS.site.createdAt),
+                ogImage: stringEmpty(lines[13], PLACEHOLDERS.site.ogImage)
             } as Site;
         });
 
@@ -58,20 +58,20 @@ export function parseSites(content: string): Site[] {
 export function serializeSites(sites: Site[]): string {
     // 检查每个字段不为空行, 如果有空值, 则用默认值替代
     return sites.map(site => [
-        stringDef(site.title, '[title]'),
-        stringDef(site.url, '[url]'),
-        stringDef(site.favicon, `[favicon]`),
-        stringDef(site.description, '[description]'),
-        stringDef(site.category, '[category]'),
-        site.tags.join(',') || '[tags]',
-        site.ageRating || '[ageRating]',
-        stringDef(site.language, '[language]'),
+        stringDef(site.title, PLACEHOLDERS.site.title),
+        stringDef(site.url, PLACEHOLDERS.site.url),
+        stringDef(site.favicon, PLACEHOLDERS.site.favicon),
+        stringDef(site.description, PLACEHOLDERS.site.description),
+        stringDef(site.category, PLACEHOLDERS.site.category),
+        site.tags.join(',') || PLACEHOLDERS.site.tags,
+        site.ageRating || PLACEHOLDERS.site.ageRating,
+        stringDef(site.language, PLACEHOLDERS.site.language),
         site.starred ? '1' : '0',
         site.supportsPWA ? 'true' : 'false',
         site.supportsHTTPS ? 'true' : 'false',
-        stringDef(site.recommendation, '[recommendation]'),
+        stringDef(site.recommendation, PLACEHOLDERS.site.recommendation),
         stringDef(site.createdAt, new Date().toISOString()),
-        stringDef(site.ogImage, "[ogImage]")
+        stringDef(site.ogImage, PLACEHOLDERS.site.ogImage)
     ].map(line => line.replace("\n", " ↵ ")).join('\n')).join('\n\n');
 }
 
@@ -85,13 +85,13 @@ export function parseTodo(content: string): Todo[] {
         const [url, ip, language, os, browser, submittedAt, status]
             = line.split(',').map(field => field.replace(/^"|"$/g, ''));
         const todo: Todo = {
-            url: stringDef(url, 'https://example.com'),
-            ip: stringDef(ip, '0.0.0.0'),
-            language: stringDef(language, 'en-US'),
-            os: stringDef(os, 'Windows'),
-            browser: stringDef(browser, 'Chrome'),
-            submittedAt: stringDef(submittedAt, new Date().toISOString()),
-            status: status as 'pending' | 'approved' | 'rejected'
+            url: stringEmpty(url, PLACEHOLDERS.todo.url),
+            ip: stringEmpty(ip, PLACEHOLDERS.todo.ip),
+            language: stringEmpty(language, PLACEHOLDERS.todo.language),
+            os: stringEmpty(os, PLACEHOLDERS.todo.os),
+            browser: stringEmpty(browser, PLACEHOLDERS.todo.browser),
+            submittedAt: stringEmpty(submittedAt, PLACEHOLDERS.todo.submittedAt),
+            status: stringEmpty(status, PLACEHOLDERS.todo.status) as 'pending' | 'approved' | 'rejected' || 'pending'
         };
         todos.push(todo);
     }
@@ -101,13 +101,13 @@ export function parseTodo(content: string): Todo[] {
 // Todo 对象序列化为 todo.csv 格式
 export function serializeTodo(todos: Todo[]): string {
     return todos.map(todo => [
-        stringDef(todo.url, 'https://example.com'),
-        stringDef(todo.ip, '0.0.0.0'),
-        stringDef(todo.language, 'en-US'),
-        stringDef(todo.os, 'Windows'),
-        stringDef(todo.browser, 'Chrome'),
+        stringDef(todo.url, PLACEHOLDERS.todo.url),
+        stringDef(todo.ip, PLACEHOLDERS.todo.ip),
+        stringDef(todo.language, PLACEHOLDERS.todo.language),
+        stringDef(todo.os, PLACEHOLDERS.todo.os),
+        stringDef(todo.browser, PLACEHOLDERS.todo.browser),
         stringDef(todo.submittedAt, new Date().toISOString()),
-        todo.status || 'pending'
+        todo.status || PLACEHOLDERS.todo.status
     ].map(line => `"${line.replace("\n", " ↵ ")}"`).join(',')).join('\n');
 }
 
