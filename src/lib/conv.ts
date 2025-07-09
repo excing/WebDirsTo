@@ -29,7 +29,7 @@ const PLACEHOLDERS = {
 export function parseSites(content: string): Site[] {
     const parts = content.split(/\n{2,}/)
         .map(part => part.trim().split('\n'));
-    console.log(parts);
+    // console.log(parts);
 
     const sites = parts.filter(lines => lines.length === 14)
         .map(lines => {

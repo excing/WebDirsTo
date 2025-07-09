@@ -1,18 +1,20 @@
 <script lang="ts">
-  import type { PageData } from './$types';
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/constants.js';
-  import type { Todo, Site } from '$lib/types.js';
+  import type { Todo } from '$lib/types.js';
+  import type { PageData } from './$types';
 
   export let data: PageData;
 
   let processingSubmissions = new Set<string>();
-  
   let isLoggingOut = false;
-  
+  let successMessage = '';
+  let errorMessage = '';
+  let isRefreshing = false;
+
   async function handleLogout() {
     isLoggingOut = true;
-    
+
     try {
       await fetch('/api/admin/auth', {
         method: 'DELETE'
@@ -23,18 +25,105 @@
       goto('/admin');
     }
   }
-  
+
   function formatDate(dateString: string | undefined): string {
     if (!dateString) return '未知';
     return new Date(dateString).toLocaleString('zh-CN');
   }
 
   async function quickApprove(submission: Todo) {
+    if (processingSubmissions.has(submission.url)) return;
 
+    processingSubmissions.add(submission.url);
+    processingSubmissions = processingSubmissions; // 触发响应式更新
+
+    try {
+      const response = await fetch('/api/admin/sites', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: submission.url })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        successMessage = `网站 ${submission.url} 已成功批准并添加到网站列表`;
+        // 从待审核列表中移除
+        data.Todos = data.Todos.filter(todo => todo.url !== submission.url);
+        data.stats.pendingSubmissions--;
+        data.stats.totalSites++;
+
+        // 3秒后清除成功消息
+        setTimeout(() => successMessage = '', 3000);
+      } else {
+        errorMessage = result.message || '批准失败';
+        setTimeout(() => errorMessage = '', 5000);
+      }
+    } catch (error) {
+      console.error('Quick approve error:', error);
+      errorMessage = '网络错误，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      processingSubmissions.delete(submission.url);
+      processingSubmissions = processingSubmissions;
+    }
   }
 
   async function quickReject(submission: Todo) {
+    if (processingSubmissions.has(submission.url)) return;
 
+    processingSubmissions.add(submission.url);
+    processingSubmissions = processingSubmissions;
+
+    try {
+      const response = await fetch('/api/admin/sites', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: submission.url,
+          status: 'rejected'
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        successMessage = `网站 ${submission.url} 已被拒绝`;
+        // 从待审核列表中移除
+        data.Todos = data.Todos.filter(todo => todo.url !== submission.url);
+        data.stats.pendingSubmissions--;
+
+        setTimeout(() => successMessage = '', 3000);
+      } else {
+        errorMessage = result.message || '拒绝失败';
+        setTimeout(() => errorMessage = '', 5000);
+      }
+    } catch (error) {
+      console.error('Quick reject error:', error);
+      errorMessage = '网络错误，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      processingSubmissions.delete(submission.url);
+      processingSubmissions = processingSubmissions;
+    }
+  }
+
+  async function refreshData() {
+    isRefreshing = true;
+    try {
+      // 重新加载页面数据
+      window.location.reload();
+    } catch (error) {
+      console.error('Refresh error:', error);
+      errorMessage = '刷新失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      isRefreshing = false;
+    }
   }
 </script>
 
@@ -57,8 +146,18 @@
           <span class="text-sm text-gray-600 dark:text-gray-400">
             欢迎，{data.session.username}
           </span>
-          <a 
-            href="/" 
+          <button
+            on:click={refreshData}
+            disabled={isRefreshing}
+            class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm disabled:opacity-50 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-1 {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            {isRefreshing ? '刷新中...' : '刷新'}
+          </button>
+          <a
+            href="/"
             target="_blank"
             class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
           >
@@ -77,7 +176,31 @@
   </nav>
 
   <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <!-- 错误提示 -->
+    <!-- 成功消息 -->
+    {#if successMessage}
+      <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-4">
+        <div class="flex">
+          <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <p class="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
+        </div>
+      </div>
+    {/if}
+
+    <!-- 错误消息 -->
+    {#if errorMessage}
+      <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+        <div class="flex">
+          <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <p class="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
+        </div>
+      </div>
+    {/if}
+
+    <!-- 服务器错误提示 -->
     {#if data.error}
       <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
         <div class="flex">
@@ -188,17 +311,17 @@
             <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
               快速操作
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <a
-                href="/admin/sites/add"
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                on:click={() => goto('/submit')}
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                添加新网站
-              </a>
-              
+                提交新网站
+              </button>
+
               <a
                 href="/admin/submissions"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -208,7 +331,7 @@
                 </svg>
                 审核提交 ({data.stats.pendingSubmissions})
               </a>
-              
+
               <a
                 href="/admin/sites"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -218,15 +341,38 @@
                 </svg>
                 管理网站
               </a>
-              
+
               <a
-                href="/admin/analytics"
+                href="/api/sites"
+                target="_blank"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                 </svg>
-                数据分析
+                API 数据
+              </a>
+
+              <a
+                href="/sitemap.xml"
+                target="_blank"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                站点地图
+              </a>
+
+              <a
+                href="/health"
+                target="_blank"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                健康检查
               </a>
             </div>
           </div>
@@ -275,33 +421,61 @@
             <div class="space-y-3">
               {#each data.Todos.slice(0, 10) as submission}
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div class="flex justify-between items-start">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {submission.url}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        提交时间: {formatDate(submission.submittedAt)}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        来源: {submission.os} / {submission.browser}
-                      </p>
+                  <div class="space-y-2">
+                    <div class="flex justify-between items-start">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <a href={submission.url} target="_blank" class="hover:text-blue-600 dark:hover:text-blue-400">
+                            {submission.url}
+                          </a>
+                        </p>
+                        <div class="flex items-center space-x-4 mt-1">
+                          <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDate(submission.submittedAt)}
+                          </p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {submission.os} / {submission.browser}
+                          </p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">
+                            IP: {submission.ip}
+                          </p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">
+                            语言: {submission.language}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div class="flex space-x-2 ml-2">
+                    <div class="flex space-x-2">
                       <button
                         on:click={() => quickApprove(submission)}
                         disabled={processingSubmissions.has(submission.url)}
-                        class="text-green-600 hover:text-green-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
                         {processingSubmissions.has(submission.url) ? '处理中...' : '批准'}
                       </button>
                       <button
                         on:click={() => quickReject(submission)}
                         disabled={processingSubmissions.has(submission.url)}
-                        class="text-red-600 hover:text-red-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
                         {processingSubmissions.has(submission.url) ? '处理中...' : '拒绝'}
                       </button>
+                      <a
+                        href={submission.url}
+                        target="_blank"
+                        class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        访问
+                      </a>
                     </div>
                   </div>
                 </div>
