@@ -23,3 +23,14 @@ export function encode64(text: string): string {
     return btoa(unescape(encodeURIComponent(text)))
     // return btoa(String.fromCharCode(...new TextEncoder().encode(text)));
 }
+
+// md5 处理
+export const md5 = async (str: string) => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashHex = [...new Uint8Array(hashBuffer)]
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    return hashHex;
+};

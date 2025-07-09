@@ -62,3 +62,15 @@ export interface ApiResponse<T> {
 	error?: string;
 	message?: string;
 }
+
+// 认证相关类型
+export interface AdminCredentials {
+	username: string;
+	password: string;
+}
+
+export interface AdminSession {
+	isAuthenticated: boolean;
+	username?: string;
+	expiresAt?: number;
+}

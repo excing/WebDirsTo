@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DATA_FILES, ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
-import { AdminAuthService } from '$lib/server/auth.js';
+import { AdminAuthService } from '$lib/server/auth';
 import { createGitHubService } from '$lib/server/github';
 import type { Site } from '$lib/types';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';

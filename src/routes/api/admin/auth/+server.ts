@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { ApiResponse, AdminCredentials, AdminSession } from '$lib/types.js';
 import { ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
-import { AdminAuthService } from '$lib/server/auth.js';
+import { AdminAuthService } from '$lib/server/auth';
 
 /**
  * POST /api/admin/auth - 管理员登录
@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     const credentials: AdminCredentials = await request.json();
 
     // 使用认证服务验证凭据
-    const validation = AdminAuthService.validateCredentials(credentials);
+    const validation = await AdminAuthService.validateCredentials(credentials);
 
     if (!validation.isValid) {
       const statusCode = validation.error === '服务器配置错误' ? 500 :

@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { redirect, fail } from '@sveltejs/kit';
 import { AdminAuthService } from '$lib/server/auth.js';
+import { md5 } from '$lib/tools';
 
 export const load: PageServerLoad = async ({ cookies }) => {
   // 检查是否已经登录
@@ -28,11 +29,13 @@ export const actions: Actions = {
         username: username || ''
       });
     }
+
+    const pwdmd5 = await md5(password.trim());
     
     // 使用认证服务验证凭据
-    const validation = AdminAuthService.validateCredentials({
+    const validation = await AdminAuthService.validateCredentials({
       username: username.trim(),
-      password: password.trim()
+      password: pwdmd5,
     });
     
     if (!validation.isValid) {
