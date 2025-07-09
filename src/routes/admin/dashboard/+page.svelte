@@ -1,8 +1,10 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/constants.js';
+    import { request } from '$lib/fetch';
   import type { Todo } from '$lib/types.js';
   import type { PageData } from './$types';
+  import { onMount } from 'svelte';
 
   export let data: PageData;
 
@@ -11,12 +13,18 @@
   let successMessage = '';
   let errorMessage = '';
   let isRefreshing = false;
+  let isLoading = true;
+
+  // 客户端渲染完成后设置加载状态
+  onMount(() => {
+    isLoading = false;
+  });
 
   async function handleLogout() {
     isLoggingOut = true;
 
     try {
-      await fetch('/api/admin/auth', {
+      await request('/api/admin/auth', {
         method: 'DELETE'
       });
     } catch (error) {
@@ -38,7 +46,7 @@
     processingSubmissions = processingSubmissions; // 触发响应式更新
 
     try {
-      const response = await fetch('/api/admin/sites', {
+      const response = await request('/api/admin/sites', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -78,7 +86,7 @@
     processingSubmissions = processingSubmissions;
 
     try {
-      const response = await fetch('/api/admin/sites', {
+      const response = await request('/api/admin/sites', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -115,8 +123,37 @@
   async function refreshData() {
     isRefreshing = true;
     try {
-      // 重新加载页面数据
-      window.location.reload();
+      // 重新获取数据
+      const [sitesResponse] = await Promise.all([
+        request('/api/admin/sites')
+      ]);
+
+      if (sitesResponse.ok) {
+        const sitesResult = await sitesResponse.json();
+        if (sitesResult.success) {
+          // 动态导入解析函数
+          const { parseSites, parseTodo } = await import('$lib/conv');
+
+          const sites = parseSites(sitesResult.data.sites.content || '');
+          const todos = parseTodo(sitesResult.data.pendingList.content || '');
+          const archivedSites = parseSites(sitesResult.data.archivedList.content || '');
+
+          // 更新数据
+          data.sites = sites
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 10);
+
+          data.Todos = todos.filter(todo => todo.status === 'pending').slice(0, 10);
+
+          // 重新计算统计信息
+          data.stats = calculateClientStats(sites, todos, archivedSites);
+
+          successMessage = '数据已刷新';
+          setTimeout(() => successMessage = '', 3000);
+        }
+      } else {
+        throw new Error('获取数据失败');
+      }
     } catch (error) {
       console.error('Refresh error:', error);
       errorMessage = '刷新失败，请稍后重试';
@@ -124,6 +161,29 @@
     } finally {
       isRefreshing = false;
     }
+  }
+
+  function calculateClientStats(sites: any[], todos: any[], archivedSites: any[]) {
+    const categoryCounts: Record<string, number> = {};
+    sites.forEach(site => {
+      const category = site.category || '未分类';
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    const sortedCategories = Object.entries(categoryCounts)
+      .sort(([,a], [,b]) => b - a)
+      .reduce((obj, [key, value]) => {
+        obj[key] = value;
+        return obj;
+      }, {} as Record<string, number>);
+
+    return {
+      totalSites: sites.length,
+      pendingSubmissions: todos.filter(todo => todo.status === 'pending').length,
+      starredSites: sites.filter(site => site.starred).length,
+      archivedSites: archivedSites.length,
+      categoryCounts: sortedCategories
+    };
   }
 </script>
 
@@ -133,6 +193,18 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <!-- 加载状态 -->
+  {#if isLoading}
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">加载中...</p>
+      </div>
+    </div>
+  {:else}
   <!-- 顶部导航 -->
   <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -549,4 +621,5 @@
       </div>
     </div>
   </div>
+  {/if}
 </div>

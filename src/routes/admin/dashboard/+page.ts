@@ -1,34 +1,40 @@
-import type { PageServerLoad } from './$types';
+import type { PageLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { AdminAuthService } from '$lib/server/auth.js';
-import { createGitHubService } from '$lib/server/github';
-import { DATA_FILES } from '$lib/constants';
-import { parseSites, parseTodo } from '$lib/conv';
 import type { Site, Todo } from '$lib/types';
 
-export const load: PageServerLoad = async ({ cookies }) => {
+export const ssr = false; // 启用客户端渲染
+
+export const load: PageLoad = async ({ fetch }) => {
   try {
-    // 检查管理员权限
-    const session = AdminAuthService.getSession(cookies);
+    // 检查管理员认证状态
+    const authResponse = await fetch('/api/admin/auth');
+    const authResult = await authResponse.json();
     
-    if (!session?.isAuthenticated) {
+    if (!authResult.success || !authResult.data.isAuthenticated) {
       throw redirect(302, '/admin');
     }
 
-    // 获取数据
-    const github = createGitHubService();
-    
-    // 并行获取所有数据文件
-    const [sitesFile, todosFile, archivedFile] = await Promise.all([
-      github.getRawFileContent(DATA_FILES.SITES).catch(() => ''),
-      github.getRawFileContent(DATA_FILES.PENDING).catch(() => ''),
-      github.getRawFileContent(DATA_FILES.ARCHIVED).catch(() => '')
+    // 并行获取所有数据
+    const [sitesResponse] = await Promise.all([
+      fetch('/api/admin/sites').catch(() => null),
     ]);
 
-    // 解析数据
-    const sites = parseSites(sitesFile);
-    const todos = parseTodo(todosFile);
-    const archivedSites = parseSites(archivedFile);
+    let sites: Site[] = [];
+    let todos: Todo[] = [];
+    let archivedSites: Site[] = [];
+
+    // 处理网站数据
+    if (sitesResponse?.ok) {
+      const sitesResult = await sitesResponse.json();
+      if (sitesResult.success) {
+        // 解析返回的数据
+        const { parseSites, parseTodo } = await import('$lib/conv');
+        
+        sites = parseSites(sitesResult.data.sites.content || '');
+        todos = parseTodo(sitesResult.data.pendingList.content || '');
+        archivedSites = parseSites(sitesResult.data.archivedList.content || '');
+      }
+    }
 
     // 计算统计信息
     const stats = calculateStats(sites, todos, archivedSites);
@@ -43,7 +49,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 
     return {
       session: {
-        username: session.username,
+        username: authResult.data.username,
         isAuthenticated: true
       },
       sites: recentSites,
