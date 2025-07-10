@@ -193,46 +193,64 @@
   <!-- 顶部导航 -->
   <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16">
-        <div class="flex items-center">
-          <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center min-w-0 flex-1">
+          <h1 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
             {APP_NAME} 管理后台
           </h1>
         </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-600 dark:text-gray-400">
+
+        <!-- 移动端：简化的操作区域 -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <!-- 用户信息 - 在小屏幕上隐藏 -->
+          <span class="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
             欢迎，{session?.username}
           </span>
+
+          <!-- 刷新按钮 -->
           <button
             on:click={refreshData}
             disabled={isRefreshing}
-            class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm disabled:opacity-50 flex items-center"
+            class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm disabled:opacity-50 flex items-center p-1 sm:p-0"
+            title="刷新数据"
           >
-            <svg class="w-4 h-4 mr-1 {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:mr-1 {isRefreshing ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            {isRefreshing ? '刷新中...' : '刷新'}
+            <span class="hidden sm:inline">{isRefreshing ? '刷新中...' : '刷新'}</span>
           </button>
+
+          <!-- 查看网站链接 -->
           <a
             href="/"
             target="_blank"
-            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
+            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm p-1 sm:p-0"
+            title="查看网站"
           >
-            查看网站
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+            <span class="hidden sm:inline">查看网站</span>
           </a>
+
+          <!-- 登出按钮 -->
           <button
             on:click={handleLogout}
             disabled={isLoggingOut}
-            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm disabled:opacity-50"
+            class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm disabled:opacity-50 p-1 sm:p-0"
+            title="登出"
           >
-            {isLoggingOut ? '登出中...' : '登出'}
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="hidden sm:inline">{isLoggingOut ? '登出中...' : '登出'}</span>
           </button>
         </div>
       </div>
     </div>
   </nav>
 
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
     <!-- 成功消息 -->
     {#if successMessage}
       <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-4">
@@ -270,7 +288,7 @@
     {/if}
 
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
         <div class="p-5">
           <div class="flex items-center">
@@ -361,14 +379,14 @@
     </div>
 
     <!-- 快速操作 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <div class="lg:col-span-2">
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
+          <div class="px-4 py-4 sm:px-6 sm:py-5">
             <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
               快速操作
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <button
                 on:click={() => goto('/submit')}
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -376,27 +394,27 @@
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                提交新网站
+                <span class="truncate">提交新网站</span>
               </button>
 
               <a
                 href="/admin/submissions"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                 </svg>
-                审核提交 ({data.stats.pendingSubmissions})
+                <span class="truncate">审核提交 ({data.stats.pendingSubmissions})</span>
               </a>
 
               <a
                 href="/admin/sites"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                 </svg>
-                管理网站
+                <span class="truncate">管理网站</span>
               </a>
 
               <a
@@ -404,10 +422,10 @@
                 target="_blank"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                 </svg>
-                API 数据
+                <span class="truncate">API 数据</span>
               </a>
 
               <a
@@ -415,10 +433,10 @@
                 target="_blank"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                站点地图
+                <span class="truncate">站点地图</span>
               </a>
 
               <a
@@ -426,10 +444,10 @@
                 target="_blank"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                数据统计
+                <span class="truncate">数据统计</span>
               </a>
             </div>
           </div>
@@ -438,7 +456,7 @@
 
       <!-- 分类统计 -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
+        <div class="px-4 py-4 sm:px-6 sm:py-5">
           <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
             分类统计
           </h3>
@@ -458,17 +476,17 @@
     </div>
 
     <!-- 最近提交和网站列表 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       <!-- 待审核提交 -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
+        <div class="px-4 py-4 sm:px-6 sm:py-5">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 dark:text-white">
               待审核提交
             </h3>
             <a
               href="/admin/submissions"
-              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex-shrink-0"
             >
               查看全部
             </a>
@@ -493,14 +511,14 @@
 
       <!-- 最近添加的网站 -->
       <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
+        <div class="px-4 py-4 sm:px-6 sm:py-5">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            <h3 class="text-base sm:text-lg leading-6 font-medium text-gray-900 dark:text-white">
               最近添加的网站
             </h3>
             <a
               href="/admin/sites"
-              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex-shrink-0"
             >
               查看全部
             </a>
