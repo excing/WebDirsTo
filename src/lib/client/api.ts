@@ -1,4 +1,5 @@
 import { request } from "$lib/fetch";
+import type { GitHubBlob } from "$lib/types";
 
 export const API = {
     // 一次获取 sites, pendingList, archivedList 网站列表
@@ -31,4 +32,13 @@ export const API = {
             }),
         });
     },
+    commits: async (blobs: GitHubBlob[]) => {
+        return await request('/api/admin/github', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(blobs),
+        });
+    }
 }
