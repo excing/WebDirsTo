@@ -120,10 +120,69 @@ export class GitHubService {
     }
 
     /**
-     * 更新文件内容
+     * 批量更新文件内容
+     * 返回包含成功和失败结果的详细信息，由客户端处理
      */
-    async updateFiles(commits: GithubCommit[]): Promise<GitHubFileResponse[]> {
-        return Promise.all(commits.map(commit => this.updateFile(commit.path, commit.content, commit.message, commit.sha)))
+    async updateFiles(commits: GithubCommit[]): Promise<{
+        success: GitHubFileResponse[];
+        failures: Array<{ commit: GithubCommit; error: string }>;
+        totalCount: number;
+        successCount: number;
+        failureCount: number;
+    }> {
+        if (commits.length === 0) {
+            return {
+                success: [],
+                failures: [],
+                totalCount: 0,
+                successCount: 0,
+                failureCount: 0
+            };
+        }
+
+        // 使用 Promise.allSettled 处理部分失败的情况
+        const results = await Promise.allSettled(
+            commits.map(commit =>
+                this.updateFile(commit.path, commit.content, commit.message, commit.sha)
+            )
+        );
+
+        const success: GitHubFileResponse[] = [];
+        const failures: Array<{ commit: GithubCommit; error: string }> = [];
+
+        results.forEach((result, index) => {
+            const commit = commits[index];
+
+            if (result.status === 'fulfilled') {
+                success.push(result.value);
+            } else {
+                const errorMsg = result.reason?.message || String(result.reason);
+                failures.push({
+                    commit,
+                    error: errorMsg
+                });
+                console.error(`[GitHub] 文件 ${commit.path} 更新失败:`, errorMsg);
+            }
+        });
+
+        const result = {
+            success,
+            failures,
+            totalCount: commits.length,
+            successCount: success.length,
+            failureCount: failures.length
+        };
+
+        // 记录批量操作结果
+        console.log(`[GitHub] 批量更新完成: ${result.successCount}/${result.totalCount} 成功`);
+
+        // 只有在全部失败时才抛出异常
+        if (result.failureCount === result.totalCount) {
+            const errorMessage = `所有文件更新失败:\n${failures.map(f => `${f.commit.path}: ${f.error}`).join('\n')}`;
+            throw new Error(errorMessage);
+        }
+
+        return result;
     }
 
 
