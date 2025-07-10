@@ -59,9 +59,9 @@
 
 			<!-- 网站描述 -->
 			{#if site.description}
-				<p class="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-2" title={site.description}>
-					{site.description}
-				</p>
+				<div class="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-2" title={site.description}>
+					{@html site.description}
+				</div>
 			{/if}
 
 			<!-- 标签和状态 -->
@@ -136,7 +136,7 @@
 		</div>
 
 		<!-- 操作按钮 -->
-		<div class="flex flex-col space-y-1 ml-3">
+		<div class="flex flex-col gap-3 ml-3">
 			<button
 				onclick={handleEdit}
 				class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"

@@ -17,8 +17,12 @@
 		onAnalyze,
 	}: Props = $props();
 
-	function formatDate(dateString: string | undefined): string {
+	function formatDate(dateString: string | undefined, isToday: boolean = true): string {
 		if (!dateString) return "未知";
+		if (isToday) {
+			// return '仅显示时间';
+			return new Date(dateString).toLocaleTimeString("zh-CN");
+		}
 		return new Date(dateString).toLocaleString("zh-CN");
 	}
 
@@ -51,24 +55,8 @@
 						{submission.url}
 					</a>
 				</p>
-				<div class="flex items-center space-x-3 mt-1">
-					<p class="text-xs text-gray-500 dark:text-gray-400">
-						<svg
-							class="w-3 h-3 inline"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-							></path>
-						</svg>
-						{formatDate(submission.submittedAt)}
-					</p>
-					<p class="text-xs text-gray-500 dark:text-gray-400">
+				<div class="flex items-center space-x-2 md:space-x-3 mt-1">
+					<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
 						<svg
 							class="w-3 h-3 inline"
 							fill="none"
@@ -84,9 +72,9 @@
 						</svg>
 						{submission.os} / {submission.browser}
 					</p>
-					<p class="text-xs text-gray-500 dark:text-gray-400">
+					<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
 						<svg
-							class="w-3 h-3 inline"
+							class="w-3 h-3 hidden sm:inline"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -106,9 +94,9 @@
 						</svg>
 						{submission.ip}
 					</p>
-					<p class="text-xs text-gray-500 dark:text-gray-400">
+					<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
 						<svg
-							class="w-3 h-3 inline"
+							class="w-3 h-3 hidden sm:inline"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -122,6 +110,22 @@
 						</svg>
 						{submission.language}
 					</p>
+					<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+						<svg
+							class="w-3 h-3 hidden sm:inline"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+							></path>
+						</svg>
+						{formatDate(submission.submittedAt)}
+					</p>
 				</div>
 			</div>
 		</div>
@@ -129,7 +133,7 @@
 			<button
 				onclick={handleAnalyze}
 				disabled={isProcessing}
-				class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+				class="inline-flex items-center px-3 py-1 truncate border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 				title="分析此提交"
 			>
 				<svg
@@ -150,7 +154,7 @@
 			<button
 				onclick={handleApprove}
 				disabled={isProcessing}
-				class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+				class="inline-flex items-center px-3 py-1 truncate border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 				title="批准此提交"
 			>
 				{#if isProcessing}
@@ -188,7 +192,7 @@
 			<button
 				onclick={handleReject}
 				disabled={isProcessing}
-				class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+				class="inline-flex items-center px-3 py-1 truncate border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 				title="拒绝此提交"
 			>
 				{#if isProcessing}
@@ -226,7 +230,7 @@
 			<a
 				href={submission.url}
 				target="_blank"
-				class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+				class="inline-flex items-center px-3 py-1 truncate border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
 				title="访问网站"
 				rel="noopener noreferrer"
 			>
