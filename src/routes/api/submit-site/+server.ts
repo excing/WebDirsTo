@@ -5,7 +5,7 @@ import { verifyAdminApiAccess } from '$lib/server/auth';
 import { todo } from '$lib/server/todo';
 import { createGitHubService } from '$lib/server/github';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
-import { isSameUrl } from '$lib/url';
+import { isSameUrl, isValidUrl } from '$lib/url';
 import { DATA_FILES } from '$lib/constants';
 
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress }) => {
@@ -13,27 +13,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		const { url } = await request.json();
 
 		// 验证输入
-		if (!url || typeof url !== 'string') {
+		if (isValidUrl(url)) {
 			return json(
 				{
 					success: false,
 					error: '请提供有效的网址'
-				},
-				{ status: 400 }
-			);
-		}
-
-		// 验证 URL 格式
-		try {
-			const urlObj = new URL(url);
-			if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
-				throw new Error('Invalid protocol');
-			}
-		} catch {
-			return json(
-				{
-					success: false,
-					error: '请提供有效的网址格式'
 				},
 				{ status: 400 }
 			);

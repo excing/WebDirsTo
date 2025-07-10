@@ -53,84 +53,14 @@
   }
 
   async function quickApprove(submission: Todo) {
-    if (processingSubmissions.has(submission.url)) return;
-
-    processingSubmissions.add(submission.url);
-    processingSubmissions = processingSubmissions; // 触发响应式更新
-
-    try {
-      const response = await request('/api/admin/sites', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url: submission.url })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        successMessage = `网站 ${submission.url} 已成功批准并添加到网站列表`;
-        // 从待审核列表中移除
-        data.Todos = data.Todos.filter(todo => todo.url !== submission.url);
-        data.stats.pendingSubmissions--;
-        data.stats.totalSites++;
-
-        // 3秒后清除成功消息
-        setTimeout(() => successMessage = '', 3000);
-      } else {
-        errorMessage = result.message || '批准失败';
-        setTimeout(() => errorMessage = '', 5000);
-      }
-    } catch (error) {
-      console.error('Quick approve error:', error);
-      errorMessage = '网络错误，请稍后重试';
-      setTimeout(() => errorMessage = '', 5000);
-    } finally {
-      processingSubmissions.delete(submission.url);
-      processingSubmissions = processingSubmissions;
-    }
   }
 
   async function quickReject(submission: Todo) {
-    if (processingSubmissions.has(submission.url)) return;
 
-    processingSubmissions.add(submission.url);
-    processingSubmissions = processingSubmissions;
+  }
 
-    try {
-      const response = await request('/api/admin/sites', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: submission.url,
-          status: 'rejected'
-        })
-      });
+  async function deleteSite(site: Site) {
 
-      const result = await response.json();
-
-      if (result.success) {
-        successMessage = `网站 ${submission.url} 已被拒绝`;
-        // 从待审核列表中移除
-        data.Todos = data.Todos.filter(todo => todo.url !== submission.url);
-        data.stats.pendingSubmissions--;
-
-        setTimeout(() => successMessage = '', 3000);
-      } else {
-        errorMessage = result.message || '拒绝失败';
-        setTimeout(() => errorMessage = '', 5000);
-      }
-    } catch (error) {
-      console.error('Quick reject error:', error);
-      errorMessage = '网络错误，请稍后重试';
-      setTimeout(() => errorMessage = '', 5000);
-    } finally {
-      processingSubmissions.delete(submission.url);
-      processingSubmissions = processingSubmissions;
-    }
   }
 
   async function refreshData() {
@@ -624,6 +554,12 @@
                         class="text-blue-600 hover:text-blue-800 text-xs"
                       >
                         编辑
+                      </button>
+                      <button
+                        on:click={() => deleteSite(site)}
+                        class="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        删除
                       </button>
                     </div>
                   </div>

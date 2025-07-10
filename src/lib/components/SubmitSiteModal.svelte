@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { API } from "$lib/server/api";
+
 	interface Props {
 		isOpen: boolean;
 		hasAddToFrequentSites: boolean;
@@ -69,15 +71,7 @@
 		try {
 			// 如果选择提交到后端，调用 API
 			if (newSubmitToBackend) {
-				const response = await fetch('/api/submit-site', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						url: formattedUrl,
-					}),
-				});
+				const response = await API.submitSite(formattedUrl);
 
 				const result = await response.json();
 
