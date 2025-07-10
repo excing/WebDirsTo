@@ -16,7 +16,8 @@ function parseOS(userAgent: string): string {
  * 从 User-Agent 解析浏览器信息
  */
 function parseBrowser(userAgent: string): string {
-    if (userAgent.includes('Edg/')) return 'Edge';
+    // Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36 EdgA/137.0.0.0
+    if (userAgent.includes('Edg/') || userAgent.includes('EdgA/')) return 'Edge';
     if (userAgent.includes('Chrome/') && !userAgent.includes('Edg/')) return 'Chrome';
     if (userAgent.includes('Firefox/')) return 'Firefox';
     if (userAgent.includes('Safari/') && !userAgent.includes('Chrome/')) return 'Safari';
