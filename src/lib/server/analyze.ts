@@ -182,6 +182,9 @@ export async function analyzeURL(url: string) {
 
         // 提取基本元数据
         const metadata = extractMetadata(html, analysisUrl);
+        if (!metadata.title) {
+            throw new Error('提取元数据失败');
+        }
 
         // 检测PWA支持
         // 如果不支持 https, 那么就不检查 pwa
@@ -222,7 +225,7 @@ export async function analyzeURL(url: string) {
             supportsPWA: supportsPwa,
             supportsHTTPS: supportsHttps,
             starred: false,
-            recommendation: 'None',
+            recommendation: '',
             createdAt: new Date().toISOString()
         } as Site;
 

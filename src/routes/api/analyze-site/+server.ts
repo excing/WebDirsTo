@@ -21,11 +21,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
             }, { status: 401 });
         }
 
-        const { url } = await request.json();
-        if (isValidUrl(url)) {
+        const { url } = await request.json();        
+        if (!isValidUrl(url)) {
             return json({
                 success: false,
-                error: ERROR_CODES.UNAUTHORIZED,
+                error: ERROR_CODES.INVALID_URL,
                 message: '请提供有效的网址'
             }, { status: 400 });
         }
@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         return json({
             success: true,
             data: analysisResult,
-            message: '更新成功'
+            message: '分析成功'
         });
     } catch (error) {
         console.error('Error performing action:', error);
@@ -43,7 +43,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         return json({
             success: false,
             error: ERROR_CODES.FETCH_FAILED,
-            message: ERROR_MESSAGES[ERROR_CODES.FETCH_FAILED]
+            message: error instanceof Error ? error.message : ERROR_MESSAGES[ERROR_CODES.FETCH_FAILED]
         }, { status: 500 });
     }
 }

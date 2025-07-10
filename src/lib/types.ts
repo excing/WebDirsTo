@@ -10,7 +10,7 @@ export interface Site {
 	starred: boolean;
 	supportsPWA: boolean;
 	supportsHTTPS: boolean;
-	recommendation: string;
+	recommendation: string; // 推荐语
 	createdAt: string;
 	ogImage: string;
 }
