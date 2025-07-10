@@ -27,13 +27,11 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		const github = createGitHubService();
 
 		if (!auth.isAuthorized) {
-			const todoItem = todo(url, getClientAddress(), request);
-			// console.log('todoItem:', todoItem);
 			const todoContents = await github.getFileContents(DATA_FILES.PENDING);
 			// console.log('todoContent:', todoContents.content);
 			// 验证 todoItem 是否已经存在 todo.csv 中
 			const todos = parseTodo(todoContents.content);
-			if (todos.some(todo => isSameUrl(todo.url, todoItem.url))) {
+			if (todos.some(todo => isSameUrl(todo.url, url))) {
 				return json(
 					{
 						success: false,
@@ -42,16 +40,16 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 					{ status: 400 }
 				);
 			}
+			const todoItem = todo(url, getClientAddress(), request);
+			// console.log('todoItem:', todoItem);
 			const todoContent = `${todoContents.content}\n${serializeTodo([todoItem])}`;
 			await github.updateFile(DATA_FILES.PENDING, todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
 		} else {
-			const analysisResult = await analyzeURL(url);
-			// console.log('分析结果:', analysisResult);
 			const sitesContents = await github.getFileContents(DATA_FILES.SITES);
 			// console.log('sitesContents:', sitesContents.content);
 			// 验证 analysisResult 是否已经存在 sites.txt 中
 			const sites = parseSites(sitesContents.content);
-			if (sites.some(site => isSameUrl(site.url, analysisResult.url))) {
+			if (sites.some(site => isSameUrl(site.url, url))) {
 				return json(
 					{
 						success: false,
@@ -60,6 +58,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 					{ status: 400 }
 				);
 			}
+			const analysisResult = await analyzeURL(url);
+			// console.log('分析结果:', analysisResult);
 			const sitesContent = `${sitesContents.content}\n\n${serializeSites([analysisResult])}`;
 			await github.updateFile(DATA_FILES.SITES, sitesContent, `Add ${analysisResult.title} site`, sitesContents.sha);
 		}

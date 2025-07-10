@@ -71,6 +71,11 @@ export interface GitHubFileResponse {
 	},
 }
 
+// 用于 GitHub tree api 的文件批量提交
+export interface GitHubBlob {
+	path: string;
+	content: string;
+}
 
 // API 响应类型
 export interface ApiResponse<T> {

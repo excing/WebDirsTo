@@ -1,10 +1,12 @@
 import { dev } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import { request } from "$lib/fetch";
+import { Octokit } from 'octokit';
 import { decode64, encode64 } from "$lib/tools";
-import type { GitHubFile, GitHubFileResponse } from "$lib/types";
+import type { GitHubBlob, GitHubFile, GitHubFileResponse } from "$lib/types";
 
 export class GitHubService {
+    private octokit: Octokit;
     private token: string;
     private owner: string;
     private repo: string;
@@ -18,6 +20,9 @@ export class GitHubService {
     ];
 
     constructor(token: string, owner: string, repo: string) {
+        this.octokit = new Octokit({
+            auth: 'YOUR_GITHUB_TOKEN'
+        });
         this.token = token;
         this.owner = owner;
         this.repo = repo;
@@ -116,6 +121,57 @@ export class GitHubService {
         return await this.api<GitHubFileResponse>(`/repos/${this.owner}/${this.repo}/contents/${path}`, {
             method: 'PUT',
             body: JSON.stringify(body)
+        });
+    }
+
+    async commits(blobs: GitHubBlob[], branch: string = "main") {
+        const owner = this.owner;
+        const repo = this.repo;
+
+        // 1. 获取当前分支的最新 commit
+        const currentCommit = await this.octokit.rest.git.getRef({
+            owner,
+            repo,
+            ref: `heads/${branch}`
+        });
+
+        // 2. 获取当前 commit 的 tree
+        const currentTree = await this.octokit.rest.git.getCommit({
+            owner,
+            repo,
+            commit_sha: currentCommit.data.object.sha
+        });
+
+        // 3. 创建新的 tree（包含所有文件更改）
+        const newTree = await this.octokit.rest.git.createTree({
+            owner,
+            repo,
+            base_tree: currentTree.data.tree.sha,
+            tree: blobs.map(blob => {
+                return {
+                    path: blob.path,
+                    mode: '100644',
+                    type: 'blob',
+                    content: blob.content
+                };
+            })
+        });
+
+        // 4. 创建新的 commit
+        const newCommit = await this.octokit.rest.git.createCommit({
+            owner,
+            repo,
+            message: 'Batch commit message',
+            tree: newTree.data.sha,
+            parents: [currentCommit.data.object.sha]
+        });
+
+        // 5. 更新分支引用
+        return await this.octokit.rest.git.updateRef({
+            owner,
+            repo,
+            ref: `heads/${branch}`,
+            sha: newCommit.data.sha
         });
     }
 }
