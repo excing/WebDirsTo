@@ -406,81 +406,395 @@ class SitesManager {
     }
 
     /**
-     * 批量操作: 批准多个网站
+     * 批量操作: 批准多个网站 (优化版 - 一次性提交)
      */
     async batchApproveSites(approvals: Array<{ todo: Todo; site: Site }>): Promise<{
         success: boolean;
         message?: string;
         results?: Array<{ url: string; success: boolean; message?: string }>;
     }> {
-        const results: Array<{ url: string; success: boolean; message?: string }> = [];
-        let successCount = 0;
+        try {
+            const currentTodos = [...this.state.todos];
+            const currentSites = [...this.state.sites];
+            const results: Array<{ url: string; success: boolean; message?: string }> = [];
 
-        for (const { todo, site } of approvals) {
-            try {
-                const result = await this.approveSite(todo, site);
-                results.push({
-                    url: todo.url,
-                    success: result.success,
-                    message: result.message
-                });
+            // 本地处理所有批准操作
+            for (const { todo, site } of approvals) {
+                const todoIndex = currentTodos.findIndex(t => t.url === todo.url);
 
-                if (result.success) {
-                    successCount++;
+                if (todoIndex === -1) {
+                    results.push({
+                        url: todo.url,
+                        success: false,
+                        message: '未找到要批准的提交'
+                    });
+                    continue;
                 }
-            } catch (error) {
+
+                // 检查网站是否已存在
+                const siteExists = currentSites.some(s => s.url === site.url);
+                if (siteExists) {
+                    results.push({
+                        url: todo.url,
+                        success: false,
+                        message: '网站已存在'
+                    });
+                    continue;
+                }
+
+                // 更新 todo 状态为 approved
+                currentTodos[todoIndex] = { ...todo, status: 'approved' };
+
+                // 添加到 sites
+                currentSites.push(site);
+
                 results.push({
                     url: todo.url,
-                    success: false,
-                    message: error instanceof Error ? error.message : '批准失败'
+                    success: true,
+                    message: '批准成功'
                 });
             }
-        }
 
-        return {
-            success: successCount > 0,
-            message: `成功批准 ${successCount}/${approvals.length} 个网站`,
-            results
-        };
+            const successCount = results.filter(r => r.success).length;
+
+            if (successCount === 0) {
+                return {
+                    success: false,
+                    message: '没有网站被成功批准',
+                    results
+                };
+            }
+
+            // 一次性提交所有更改
+            const blobs: GitHubBlob[] = [
+                {
+                    path: DATA_FILES.PENDING,
+                    content: serializeTodo(currentTodos)
+                },
+                {
+                    path: DATA_FILES.SITES,
+                    content: serializeSites(currentSites)
+                }
+            ];
+
+            const response = await API.commits(blobs);
+
+            if (!response.ok) {
+                const result = await response.json();
+                return {
+                    success: false,
+                    message: result.message || '批量批准失败',
+                    results: results.map(r => ({ ...r, success: false, message: '提交失败' }))
+                };
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 更新本地状态
+                this.setState({
+                    todos: currentTodos,
+                    sites: currentSites
+                });
+
+                return {
+                    success: true,
+                    message: `成功批准 ${successCount}/${approvals.length} 个网站`,
+                    results
+                };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || '批量批准失败',
+                    results: results.map(r => ({ ...r, success: false, message: '提交失败' }))
+                };
+            }
+        } catch (error) {
+            console.error('Batch approve sites error:', error);
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : '批量批准失败',
+                results: approvals.map(({ todo }) => ({
+                    url: todo.url,
+                    success: false,
+                    message: '操作失败'
+                }))
+            };
+        }
     }
 
     /**
-     * 批量操作: 拒绝多个网站
+     * 批量操作: 拒绝多个网站 (优化版 - 一次性提交)
      */
     async batchRejectSites(rejections: Array<{ todo: Todo; reason?: string }>): Promise<{
         success: boolean;
         message?: string;
         results?: Array<{ url: string; success: boolean; message?: string }>;
     }> {
-        const results: Array<{ url: string; success: boolean; message?: string }> = [];
-        let successCount = 0;
+        try {
+            const currentTodos = [...this.state.todos];
+            const results: Array<{ url: string; success: boolean; message?: string }> = [];
 
-        for (const { todo, reason } of rejections) {
-            try {
-                const result = await this.rejectSite(todo, reason);
-                results.push({
-                    url: todo.url,
-                    success: result.success,
-                    message: result.message
-                });
+            // 本地处理所有拒绝操作
+            for (const { todo, reason } of rejections) {
+                const todoIndex = currentTodos.findIndex(t => t.url === todo.url);
 
-                if (result.success) {
-                    successCount++;
+                if (todoIndex === -1) {
+                    results.push({
+                        url: todo.url,
+                        success: false,
+                        message: '未找到要拒绝的提交'
+                    });
+                    continue;
                 }
-            } catch (error) {
+
+                // 更新 todo 状态为 rejected
+                currentTodos[todoIndex] = { ...todo, status: 'rejected' };
+
                 results.push({
                     url: todo.url,
-                    success: false,
-                    message: error instanceof Error ? error.message : '拒绝失败'
+                    success: true,
+                    message: reason ? `拒绝成功: ${reason}` : '拒绝成功'
                 });
             }
-        }
 
-        return {
-            success: successCount > 0,
-            message: `成功拒绝 ${successCount}/${rejections.length} 个网站`,
-            results
+            const successCount = results.filter(r => r.success).length;
+
+            if (successCount === 0) {
+                return {
+                    success: false,
+                    message: '没有网站被成功拒绝',
+                    results
+                };
+            }
+
+            // 一次性提交所有更改
+            const blobs: GitHubBlob[] = [
+                {
+                    path: DATA_FILES.PENDING,
+                    content: serializeTodo(currentTodos)
+                }
+            ];
+
+            const response = await API.commits(blobs);
+
+            if (!response.ok) {
+                const result = await response.json();
+                return {
+                    success: false,
+                    message: result.message || '批量拒绝失败',
+                    results: results.map(r => ({ ...r, success: false, message: '提交失败' }))
+                };
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 更新本地状态
+                this.setState({
+                    todos: currentTodos
+                });
+
+                return {
+                    success: true,
+                    message: `成功拒绝 ${successCount}/${rejections.length} 个网站`,
+                    results
+                };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || '批量拒绝失败',
+                    results: results.map(r => ({ ...r, success: false, message: '提交失败' }))
+                };
+            }
+        } catch (error) {
+            console.error('Batch reject sites error:', error);
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : '批量拒绝失败',
+                results: rejections.map(({ todo }) => ({
+                    url: todo.url,
+                    success: false,
+                    message: '操作失败'
+                }))
+            };
+        }
+    }
+
+    /**
+     * 混合批量操作: 同时处理批准和拒绝 (最优化版本)
+     */
+    async batchProcessSites(operations: {
+        approvals?: Array<{ todo: Todo; site: Site }>;
+        rejections?: Array<{ todo: Todo; reason?: string }>;
+    }): Promise<{
+        success: boolean;
+        message?: string;
+        results?: {
+            approvals: Array<{ url: string; success: boolean; message?: string }>;
+            rejections: Array<{ url: string; success: boolean; message?: string }>;
         };
+    }> {
+        try {
+            const { approvals = [], rejections = [] } = operations;
+            const currentTodos = [...this.state.todos];
+            const currentSites = [...this.state.sites];
+
+            const approvalResults: Array<{ url: string; success: boolean; message?: string }> = [];
+            const rejectionResults: Array<{ url: string; success: boolean; message?: string }> = [];
+
+            // 处理批准操作
+            for (const { todo, site } of approvals) {
+                const todoIndex = currentTodos.findIndex(t => t.url === todo.url);
+
+                if (todoIndex === -1) {
+                    approvalResults.push({
+                        url: todo.url,
+                        success: false,
+                        message: '未找到要批准的提交'
+                    });
+                    continue;
+                }
+
+                // 检查网站是否已存在
+                const siteExists = currentSites.some(s => s.url === site.url);
+                if (siteExists) {
+                    approvalResults.push({
+                        url: todo.url,
+                        success: false,
+                        message: '网站已存在'
+                    });
+                    continue;
+                }
+
+                // 更新 todo 状态为 approved
+                currentTodos[todoIndex] = { ...todo, status: 'approved' };
+
+                // 添加到 sites
+                currentSites.push(site);
+
+                approvalResults.push({
+                    url: todo.url,
+                    success: true,
+                    message: '批准成功'
+                });
+            }
+
+            // 处理拒绝操作
+            for (const { todo, reason } of rejections) {
+                const todoIndex = currentTodos.findIndex(t => t.url === todo.url);
+
+                if (todoIndex === -1) {
+                    rejectionResults.push({
+                        url: todo.url,
+                        success: false,
+                        message: '未找到要拒绝的提交'
+                    });
+                    continue;
+                }
+
+                // 更新 todo 状态为 rejected
+                currentTodos[todoIndex] = { ...todo, status: 'rejected' };
+
+                rejectionResults.push({
+                    url: todo.url,
+                    success: true,
+                    message: reason ? `拒绝成功: ${reason}` : '拒绝成功'
+                });
+            }
+
+            const successfulApprovals = approvalResults.filter(r => r.success).length;
+            const successfulRejections = rejectionResults.filter(r => r.success).length;
+            const totalSuccessful = successfulApprovals + successfulRejections;
+
+            if (totalSuccessful === 0) {
+                return {
+                    success: false,
+                    message: '没有操作成功执行',
+                    results: { approvals: approvalResults, rejections: rejectionResults }
+                };
+            }
+
+            // 准备需要更新的文件
+            const blobs: GitHubBlob[] = [
+                {
+                    path: DATA_FILES.PENDING,
+                    content: serializeTodo(currentTodos)
+                }
+            ];
+
+            // 如果有批准操作，需要更新 sites.txt
+            if (successfulApprovals > 0) {
+                blobs.push({
+                    path: DATA_FILES.SITES,
+                    content: serializeSites(currentSites)
+                });
+            }
+
+            // 一次性提交所有更改
+            const response = await API.commits(blobs);
+
+            if (!response.ok) {
+                const result = await response.json();
+                return {
+                    success: false,
+                    message: result.message || '批量操作失败',
+                    results: {
+                        approvals: approvalResults.map(r => ({ ...r, success: false, message: '提交失败' })),
+                        rejections: rejectionResults.map(r => ({ ...r, success: false, message: '提交失败' }))
+                    }
+                };
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 更新本地状态
+                this.setState({
+                    todos: currentTodos,
+                    sites: currentSites
+                });
+
+                const message = [
+                    successfulApprovals > 0 ? `批准 ${successfulApprovals} 个` : '',
+                    successfulRejections > 0 ? `拒绝 ${successfulRejections} 个` : ''
+                ].filter(Boolean).join('，') + '网站';
+
+                return {
+                    success: true,
+                    message: `成功${message}`,
+                    results: { approvals: approvalResults, rejections: rejectionResults }
+                };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || '批量操作失败',
+                    results: {
+                        approvals: approvalResults.map(r => ({ ...r, success: false, message: '提交失败' })),
+                        rejections: rejectionResults.map(r => ({ ...r, success: false, message: '提交失败' }))
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Batch process sites error:', error);
+            const { approvals = [], rejections = [] } = operations;
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : '批量操作失败',
+                results: {
+                    approvals: approvals.map(({ todo }) => ({
+                        url: todo.url,
+                        success: false,
+                        message: '操作失败'
+                    })),
+                    rejections: rejections.map(({ todo }) => ({
+                        url: todo.url,
+                        success: false,
+                        message: '操作失败'
+                    }))
+                }
+            };
+        }
     }
 
     /**
@@ -557,6 +871,7 @@ export const {
     rejectSite,
     batchApproveSites,
     batchRejectSites,
+    batchProcessSites,
     getStats,
     searchSites,
     filterSitesByCategory,

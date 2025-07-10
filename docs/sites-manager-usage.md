@@ -147,7 +147,7 @@ if (result.success) {
 }
 ```
 
-### 4. 批量操作
+### 4. 批量操作 (优化版 - 一次性提交)
 
 #### 批量批准
 ```typescript
@@ -174,6 +174,27 @@ const rejections = [
 
 const result = await batchRejectSites(rejections);
 console.log(result.message); // "成功拒绝 2/2 个网站"
+```
+
+#### 混合批量操作 (推荐)
+```typescript
+import { batchProcessSites } from '$lib/client/sites';
+
+// 同时处理批准和拒绝，只发送一次请求
+const result = await batchProcessSites({
+  approvals: [
+    { todo: todoItem1, site: siteData1 },
+    { todo: todoItem2, site: siteData2 }
+  ],
+  rejections: [
+    { todo: todoItem3, reason: '重复网站' },
+    { todo: todoItem4, reason: '内容不当' }
+  ]
+});
+
+console.log(result.message); // "成功批准 2 个，拒绝 2 个网站"
+console.log(result.results.approvals); // 批准结果
+console.log(result.results.rejections); // 拒绝结果
 ```
 
 ### 5. 查询和筛选
