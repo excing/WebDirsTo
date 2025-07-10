@@ -1,13 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { DATA_FILES, ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
+import { ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
 import { AdminAuthService } from '$lib/server/auth';
 import { createGitHubService } from '$lib/server/github';
+import type { GithubCommit } from '$lib/types';
 
 /**
- * Get /api/admin/sites - 获取所有网站数据
+ * PUT /api/admin/sites - 更新指定网站数据
  */
-export const GET: RequestHandler = async ({ cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies }) => {
     try {
         // 使用认证服务验证 API 访问权限
         const authResult = AdminAuthService.verifyApiAccess(cookies);
@@ -21,20 +22,16 @@ export const GET: RequestHandler = async ({ cookies }) => {
         }
 
         const github = createGitHubService();
-        // 请改写 Promise.all 写法
-        const [sites, pendingList, archivedList] = await Promise.all([
-            github.getFileContents(DATA_FILES.SITES),
-            github.getFileContents(DATA_FILES.PENDING),
-            github.getFileContents(DATA_FILES.ARCHIVED)
-        ]);
+        const commits: GithubCommit[] = await request.json();
+        const response = github.updateFiles(commits);
 
         return json({
             success: true,
-            data: { sites, pendingList, archivedList }
+            data: response,
+            message: '更新成功'
         });
-
     } catch (error) {
-        console.error('Error fetching sites data:', error);
+        console.error('Error performing action:', error);
 
         return json({
             success: false,

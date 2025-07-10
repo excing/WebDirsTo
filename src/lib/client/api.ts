@@ -8,7 +8,7 @@ export const API = {
     },
     // 支持批量更新 GitHub 文件
     putCommits: async (commits: GithubCommit[]) => {
-        return await request('/api/admin/sites', {
+        return await request('/api/admin/github', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
