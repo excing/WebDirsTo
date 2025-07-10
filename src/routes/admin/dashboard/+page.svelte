@@ -6,6 +6,8 @@
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
   import EditSiteModal from '$lib/components/EditSiteModal.svelte';
+  import PendingSubmissionItem from '$lib/components/admin/PendingSubmissionItem.svelte';
+  import RecentSiteItem from '$lib/components/admin/RecentSiteItem.svelte';
 
   export let session: PageData;
 
@@ -52,10 +54,7 @@
     }
   }
 
-  function formatDate(dateString: string | undefined): string {
-    if (!dateString) return '未知';
-    return new Date(dateString).toLocaleString('zh-CN');
-  }
+
 
   async function quickApprove(submission: Todo) {
   }
@@ -478,65 +477,12 @@
           {#if data.Todos.length > 0}
             <div class="space-y-3">
               {#each data.Todos.slice(0, 10) as submission}
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div class="space-y-2">
-                    <div class="flex justify-between items-start">
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          <a href={submission.url} target="_blank" class="hover:text-blue-600 dark:hover:text-blue-400">
-                            {submission.url}
-                          </a>
-                        </p>
-                        <div class="flex items-center space-x-4 mt-1">
-                          <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDate(submission.submittedAt)}
-                          </p>
-                          <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {submission.os} / {submission.browser}
-                          </p>
-                          <p class="text-xs text-gray-500 dark:text-gray-400">
-                            IP: {submission.ip}
-                          </p>
-                          <p class="text-xs text-gray-500 dark:text-gray-400">
-                            语言: {submission.language}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="flex space-x-2">
-                      <button
-                        on:click={() => quickApprove(submission)}
-                        disabled={processingSubmissions.has(submission.url)}
-                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        {processingSubmissions.has(submission.url) ? '处理中...' : '批准'}
-                      </button>
-                      <button
-                        on:click={() => quickReject(submission)}
-                        disabled={processingSubmissions.has(submission.url)}
-                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        {processingSubmissions.has(submission.url) ? '处理中...' : '拒绝'}
-                      </button>
-                      <a
-                        href={submission.url}
-                        target="_blank"
-                        class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                        访问
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <PendingSubmissionItem
+                  {submission}
+                  isProcessing={processingSubmissions.has(submission.url)}
+                  onApprove={quickApprove}
+                  onReject={quickReject}
+                />
               {/each}
             </div>
           {:else}
@@ -563,55 +509,11 @@
           {#if data.sites.length > 0}
             <div class="space-y-3">
               {#each data.sites as site}
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <div class="flex justify-between items-start">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {site.title}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {site.url}
-                      </p>
-                      <div class="flex items-center space-x-2 mt-1">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                          {site.category}
-                        </span>
-                        {#if site.starred}
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                            置顶
-                          </span>
-                        {/if}
-                        {#if site.ageRating === '18+'}
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                            18+
-                          </span>
-                        {/if}
-                      </div>
-                    </div>
-                    <div class="flex space-x-2 ml-2">
-                      <button
-                        on:click={() => editSite(site)}
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                        title="编辑网站信息"
-                      >
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                        编辑
-                      </button>
-                      <button
-                        on:click={() => deleteSite(site)}
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                        title="删除网站"
-                      >
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                        删除
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <RecentSiteItem
+                  {site}
+                  onEdit={editSite}
+                  onDelete={deleteSite}
+                />
               {/each}
             </div>
           {:else}
