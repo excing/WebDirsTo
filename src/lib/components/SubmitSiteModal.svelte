@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { API } from "$lib/server/api";
+    import { API } from "$lib/client/api";
 
 	interface Props {
 		isOpen: boolean;
