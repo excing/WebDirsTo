@@ -3,9 +3,7 @@ import type { RequestHandler } from './$types';
 import { DATA_FILES, ERROR_CODES, ERROR_MESSAGES } from '$lib/constants';
 import { AdminAuthService } from '$lib/server/auth';
 import { createGitHubService } from '$lib/server/github';
-import type { GithubCommit, Site } from '$lib/types';
-import { parseSites, serializeSites } from '$lib/conv';
-import { isSameUrl } from '$lib/url';
+import type { GithubCommit } from '$lib/types';
 
 /**
  * Get /api/admin/sites - 获取所有网站数据
@@ -48,9 +46,9 @@ export const GET: RequestHandler = async ({ cookies }) => {
 }
 
 /**
- * POST /api/admin/sites - 更新指定网站数据
+ * PUT /api/admin/sites - 更新指定网站数据
  */
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies }) => {
     try {
         // 使用认证服务验证 API 访问权限
         const authResult = AdminAuthService.verifyApiAccess(cookies);
@@ -65,13 +63,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
         const github = createGitHubService();
         const commits: GithubCommit[] = await request.json();
-        for (let index = 0; index < commits.length; index++) {
-            const commit = commits[index];
-            await github.updateFile(commit.path, commit.content, commit.message, commit.sha);
-        }
+        const response = github.updateFiles(commits);
 
         return json({
             success: true,
+            data: response,
             message: '更新成功'
         });
     } catch (error) {

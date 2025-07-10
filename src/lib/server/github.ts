@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import { request } from "$lib/fetch";
 import { decode64, encode64 } from "$lib/tools";
-import type { GitHubFile } from "$lib/types";
+import type { GithubCommit, GitHubFile, GitHubFileResponse } from "$lib/types";
 
 export class GitHubService {
     private token: string;
@@ -103,7 +103,7 @@ export class GitHubService {
     /**
      * 更新文件内容
      */
-    async updateFile(path: string, content: string, message: string, sha?: string): Promise<void> {
+    async updateFile(path: string, content: string, message: string, sha?: string): Promise<GitHubFileResponse> {
         const body: any = {
             message,
             content: encode64(content)
@@ -113,11 +113,19 @@ export class GitHubService {
             body.sha = sha;
         }
 
-        return await this.api(`/repos/${this.owner}/${this.repo}/contents/${path}`, {
+        return await this.api<GitHubFileResponse>(`/repos/${this.owner}/${this.repo}/contents/${path}`, {
             method: 'PUT',
             body: JSON.stringify(body)
         });
     }
+
+    /**
+     * 更新文件内容
+     */
+    async updateFiles(commits: GithubCommit[]): Promise<GitHubFileResponse[]> {
+        return Promise.all(commits.map(commit => this.updateFile(commit.path, commit.content, commit.message, commit.sha)))
+    }
+
 
 }
 

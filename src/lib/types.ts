@@ -55,6 +55,23 @@ export interface GitHubFile {
 	encoding: string;
 }
 
+// GitHub API 响应类型
+export interface GitHubFileResponse {
+	// please 转换为类型
+	"content": {
+		"name": "hello.txt",
+		"path": "notes/hello.txt",
+		"sha": "95b966ae1c166bd92f8ae7d1c313e738c731dfc3",
+		"size": 9,
+		"url": "https://api.github.com/repos/octocat/Hello-World/contents/notes/hello.txt",
+		"html_url": "https://github.com/octocat/Hello-World/blob/master/notes/hello.txt",
+		"git_url": "https://api.github.com/repos/octocat/Hello-World/git/blobs/95b966ae1c166bd92f8ae7d1c313e738c731dfc3",
+		"download_url": "https://raw.githubusercontent.com/octocat/HelloWorld/master/notes/hello.txt",
+		"type": "file",
+	},
+}
+
+
 // API 响应类型
 export interface ApiResponse<T> {
 	success: boolean;
