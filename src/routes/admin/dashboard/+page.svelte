@@ -5,6 +5,7 @@
   import type { Site, Todo } from '$lib/types.js';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
+  import EditSiteModal from '$lib/components/EditSiteModal.svelte';
 
   export let session: PageData;
 
@@ -27,6 +28,10 @@
   let errorMessage = '';
   let isRefreshing = false;
   let isLoading = true;
+
+  // 编辑网站模态框状态
+  let showEditModal = false;
+  let editingSite: Site | null = null;
 
   // 客户端渲染完成后设置加载状态
   onMount(() => {
@@ -61,6 +66,41 @@
 
   async function deleteSite(site: Site) {
 
+  }
+
+  // 编辑网站
+  function editSite(site: Site) {
+    editingSite = site;
+    showEditModal = true;
+  }
+
+  // 关闭编辑模态框
+  function closeEditModal() {
+    showEditModal = false;
+    editingSite = null;
+  }
+
+  // 处理网站保存
+  function handleSiteSave(updatedSite: Site): boolean {
+    try {
+      // 更新本地数据中的网站信息
+      const siteIndex = data.sites.findIndex(s => s.url === updatedSite.url);
+      if (siteIndex !== -1) {
+        data.sites[siteIndex] = updatedSite;
+        // 触发响应式更新
+        data.sites = [...data.sites];
+      }
+
+      successMessage = '网站信息已更新';
+      setTimeout(() => successMessage = '', 3000);
+
+      return true; // 返回成功状态
+    } catch (error) {
+      console.error('更新网站信息失败:', error);
+      errorMessage = '更新失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+      return false; // 返回失败状态
+    }
   }
 
   async function refreshData() {
@@ -550,15 +590,23 @@
                     </div>
                     <div class="flex space-x-2 ml-2">
                       <button
-                        on:click={() => goto(`/admin/sites?edit=${encodeURIComponent(site.url)}`)}
-                        class="text-blue-600 hover:text-blue-800 text-xs"
+                        on:click={() => editSite(site)}
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                        title="编辑网站信息"
                       >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
                         编辑
                       </button>
                       <button
                         on:click={() => deleteSite(site)}
-                        class="text-red-600 hover:text-red-800 text-xs"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                        title="删除网站"
                       >
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
                         删除
                       </button>
                     </div>
@@ -575,3 +623,11 @@
   </div>
   {/if}
 </div>
+
+<!-- 编辑网站模态框 -->
+<EditSiteModal
+  isOpen={showEditModal}
+  site={editingSite}
+  onclose={closeEditModal}
+  onsave={handleSiteSave}
+/>
