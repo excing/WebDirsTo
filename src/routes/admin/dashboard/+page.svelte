@@ -4,11 +4,11 @@
   import { request } from '$lib/fetch';
   import type { Site, Todo } from '$lib/types.js';
   import { onMount } from 'svelte';
+  import type { PageData } from './$types';
+
+  export let session: PageData;
 
   let data = {
-      session: {
-        username: "admin",
-      },
       sites: [] as Site[],
       Todos: [] as Todo[],
       stats: {
@@ -161,8 +161,10 @@
           // 重新计算统计信息
           data.stats = calculateClientStats(sites, todos, archivedSites);
 
-          successMessage = '数据已刷新';
-          setTimeout(() => successMessage = '', 3000);
+          if (!isLoading) {
+            successMessage = '数据已刷新';
+            setTimeout(() => successMessage = '', 3000);
+          }
         }
       } else {
         throw new Error('获取数据失败');
@@ -211,7 +213,7 @@
   {#if isLoading}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
-        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
@@ -230,7 +232,7 @@
         </div>
         <div class="flex items-center space-x-4">
           <span class="text-sm text-gray-600 dark:text-gray-400">
-            欢迎，{data.session.username}
+            欢迎，{session?.username}
           </span>
           <button
             on:click={refreshData}
