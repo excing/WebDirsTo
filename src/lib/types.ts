@@ -91,7 +91,3 @@ export interface AdminSession {
 	username?: string;
 	expiresAt?: number;
 }
-
-export interface GithubCommit {
-	path: string; content: string; message: string; sha?: string;
-}
