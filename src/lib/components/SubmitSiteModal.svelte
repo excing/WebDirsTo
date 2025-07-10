@@ -1,5 +1,6 @@
 <script lang="ts">
     import { API } from "$lib/client/api";
+    import { isValidUrl } from "$lib/url";
 
 	interface Props {
 		isOpen: boolean;
@@ -30,16 +31,6 @@
 		onclose?.();
 	}
 
-	// 验证 URL
-	function validateUrl(inputUrl: string): boolean {
-		try {
-			const urlObj = new URL(inputUrl);
-			return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
-		} catch {
-			return false;
-		}
-	}
-
 	// 提交表单
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -58,7 +49,7 @@
 		}
 
 		// 验证 URL 格式
-		if (!validateUrl(formattedUrl)) {
+		if (!isValidUrl(formattedUrl)) {
 			error = '请输入有效的网址';
 			return;
 		}

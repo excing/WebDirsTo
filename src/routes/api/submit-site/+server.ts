@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 		const { url } = await request.json();
 
 		// 验证输入
-		if (isValidUrl(url)) {
+		if (!isValidUrl(url)) {
 			return json(
 				{
 					success: false,
