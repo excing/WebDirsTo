@@ -19,7 +19,7 @@ import { isSameUrl } from '$lib/url';
 export const sites = writable<Site[]>([]);
 export const todos = writable<Todo[]>([]);
 export const archived = writable<Site[]>([]);
-export const loading = writable<boolean>(false);
+export const loading = writable<boolean>(true);
 export const error = writable<string | null>(null);
 
 // 计算统计信息

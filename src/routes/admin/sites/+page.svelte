@@ -6,7 +6,6 @@
   export let data: PageData;
 
   let isRefreshing = false;
-  let isLoggingOut = false;
 
   async function refreshData() {
     isRefreshing = true;
@@ -20,11 +19,6 @@
       isRefreshing = false;
     }
   }
-
-  async function handleLogout() {
-    isLoggingOut = true;
-    // 这里会使用 AdminNavigation 组件的默认登出逻辑
-  }
 </script>
 
 <svelte:head>
@@ -37,12 +31,10 @@
   <AdminNavigation
     username={data.session.username}
     {isRefreshing}
-    {isLoggingOut}
     showBackButton={true}
     backUrl="/admin/dashboard"
     backText="返回仪表板"
     onRefresh={refreshData}
-    onLogout={handleLogout}
   />
 
   <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">

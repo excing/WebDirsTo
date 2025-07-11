@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { APP_NAME } from '$lib/constants.js';
-  import { request } from '$lib/fetch';
   import type { Site, Todo } from '$lib/types.js';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
@@ -30,7 +29,6 @@
   export let data: PageData;
 
   let processingSubmissions = new Set<string>();
-  let isLoggingOut = false;
   let successMessage = '';
   let errorMessage = '';
   let isRefreshing = false;
@@ -74,20 +72,6 @@
 
     if (!$sites || 0 == $sites.length) loadData();
   });
-
-  async function handleLogout() {
-    isLoggingOut = true;
-
-    try {
-      await request('/api/admin/auth', {
-        method: 'DELETE'
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      goto('/admin');
-    }
-  }
 
   // 快速批准提交
   async function quickApprove(submission: Todo) {
@@ -265,9 +249,7 @@
   <AdminNavigation
     username={data.session.username}
     {isRefreshing}
-    {isLoggingOut}
     onRefresh={refreshData}
-    onLogout={handleLogout}
   />
 
   <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">

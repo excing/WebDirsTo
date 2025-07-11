@@ -7,7 +7,6 @@
   export let data: PageData;
 
   let isRefreshing = false;
-  let isLoggingOut = false;
 
   async function refreshData() {
     isRefreshing = true;
@@ -20,11 +19,6 @@
     } finally {
       isRefreshing = false;
     }
-  }
-
-  async function handleLogout() {
-    isLoggingOut = true;
-    // 这里会使用 AdminNavigation 组件的默认登出逻辑
   }
 
   // 自定义返回逻辑
@@ -44,11 +38,9 @@
   <AdminNavigation
     username={data.session.username}
     {isRefreshing}
-    {isLoggingOut}
     showBackButton={true}
     backText="返回主页"
     onRefresh={refreshData}
-    onLogout={handleLogout}
     onBack={handleCustomBack}
   />
 

@@ -76,7 +76,13 @@ export const jwtAuth = {
 
   /** 注销：清除两个 cookie */
   logout(cookies: Cookies) {
-    cookies.delete(ACCESS_COOKIE, { path: '/' });
-    cookies.delete(REFRESH_COOKIE, { path: '/' });
+    cookies.set(ACCESS_COOKIE, "", {
+      ...cookieBase,
+      maxAge: 0,
+    });
+    cookies.set(REFRESH_COOKIE, "", {
+      ...cookieBase,
+      maxAge: 0,
+    });
   },
 };
