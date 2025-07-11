@@ -13,6 +13,7 @@ import { API } from './api';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
 import { DATA_FILES, DEFAULT_CATEGORIES } from '$lib/constants';
 import type { Site, Todo, GitHubBlob } from '$lib/types';
+import { isSameUrl } from '$lib/url';
 
 // 使用 Svelte store 进行状态管理
 export const sites = writable<Site[]>([]);
@@ -101,6 +102,46 @@ export async function loadData(): Promise<void> {
     }
 }
 
+// 校验并更新 todos 的状态
+// 1. sites 里的内容需要更新 todo 的 approved 的状态, 如果没有, 则需要添加
+// 2. archived 里的内容需要更新 todo 的 rejected 的状态, 如果没有, 则需要添加
+function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
+    const updatedTodos = [...todos];
+    sites.forEach(site => {
+        const todoIndex = updatedTodos.findIndex(todo => isSameUrl(todo.url, site.url));
+        if (todoIndex === -1) {
+            updatedTodos.push({
+                url: site.url,
+                ip: 'localhost',
+                language: site.language,
+                os: 'EXC',
+                browser: 'WebDirsTo',
+                submittedAt: new Date().toISOString(),
+                status: 'approved'
+            });
+        } else {
+            updatedTodos[todoIndex].status = 'approved';
+        }
+    });
+    archived.forEach(site => {
+        const todoIndex = updatedTodos.findIndex(todo => isSameUrl(todo.url, site.url));
+        if (todoIndex === -1) {
+            updatedTodos.push({
+                url: site.url,
+                ip: 'localhost',
+                language: site.language,
+                os: 'EXC',
+                browser: 'WebDirsTo',
+                submittedAt: new Date().toISOString(),
+                status: 'rejected'
+            });
+        } else {
+            updatedTodos[todoIndex].status = 'rejected';
+        }
+    });
+    return updatedTodos;
+}
+
 /**
  * 2.1 删除网站: 从 sites.txt 中删除, 并移动到 404.txt 中
  */
@@ -114,7 +155,7 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
         archived.subscribe(value => currentArchived = value)();
 
         // 从 sites 中移除
-        const siteIndex = currentSites.findIndex(site => site.url === siteToDelete.url);
+        const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, siteToDelete.url));
         if (siteIndex === -1) {
             return {
                 success: false,
@@ -122,7 +163,27 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
             };
         }
 
-        const updatedSites = currentSites.filter(site => site.url !== siteToDelete.url);
+        let currentTodos: Todo[] = [];
+        todos.subscribe(value => currentTodos = value)();
+
+        // 更新 todo 状态为 rejected
+        const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, siteToDelete.url));
+        const updatedTodos = [...currentTodos];
+        if (todoIndex === -1) {
+            updatedTodos.push({
+                url: siteToDelete.url,
+                ip: 'localhost',
+                language: siteToDelete.language,
+                os: 'EXC',
+                browser: 'WebDirsTo',
+                submittedAt: new Date().toISOString(),
+                status: 'rejected'
+            });
+        } else {
+            updatedTodos[todoIndex].status = 'rejected';
+        }
+
+        const updatedSites = currentSites.filter(site => !isSameUrl(site.url, siteToDelete.url));
         const updatedArchived = [...currentArchived, siteToDelete];
 
         // 准备 GitHub 更新
@@ -134,6 +195,10 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
             {
                 path: DATA_FILES.ARCHIVED,
                 content: serializeSites(updatedArchived)
+            },
+            {
+                path: DATA_FILES.PENDING,
+                content: serializeTodo(updatedTodos)
             }
         ];
 
@@ -153,6 +218,7 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
             // 更新状态
             sites.set(updatedSites);
             archived.set(updatedArchived);
+            todos.set(updatedTodos);
 
             return {
                 success: true,
@@ -183,7 +249,7 @@ export async function editSite(originalSite: Site, updatedSite: Site): Promise<{
         sites.subscribe(value => currentSites = value)();
 
         // 找到并更新网站
-        const siteIndex = currentSites.findIndex(site => site.url === originalSite.url);
+        const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, originalSite.url));
         if (siteIndex === -1) {
             return {
                 success: false,
@@ -250,7 +316,7 @@ export async function approveSite(todoToApprove: Todo, siteData: Site): Promise<
         sites.subscribe(value => currentSites = value)();
 
         // 更新 todo 状态为 approved
-        const todoIndex = currentTodos.findIndex(todo => todo.url === todoToApprove.url);
+        const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, todoToApprove.url));
         if (todoIndex === -1) {
             return {
                 success: false,
@@ -320,7 +386,7 @@ export async function rejectSite(todoToReject: Todo, reason?: string): Promise<{
         todos.subscribe(value => currentTodos = value)();
 
         // 更新 todo 状态为 rejected
-        const todoIndex = currentTodos.findIndex(todo => todo.url === todoToReject.url);
+        const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, todoToReject.url));
         if (todoIndex === -1) {
             return {
                 success: false,
