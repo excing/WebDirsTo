@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EditSiteModal from "$lib/components/EditSiteModal.svelte";
+	import { DEFAULT_CATEGORIES } from "$lib/constants";
 	import type { Site } from "$lib/types";
 
 	// 测试数据
@@ -36,7 +37,7 @@
 		editingSite = null;
 	}
 
-	function handleSave(site: Site) {
+	async function handleSave(site: Site): Promise<boolean> {
 		console.log("保存的网站信息:", site);
 		// 这里可以添加实际的保存逻辑
 		testSites = [...testSites, site];
@@ -172,6 +173,7 @@
 <EditSiteModal
 	isOpen={showModal}
 	site={editingSite}
+	categories={[...DEFAULT_CATEGORIES]}
 	onclose={closeModal}
 	onsave={handleSave}
 />

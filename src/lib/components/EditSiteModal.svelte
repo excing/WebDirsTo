@@ -1,16 +1,17 @@
 <script lang="ts">
   import { API } from "$lib/client/api";
   import type { Site } from "$lib/types";
-    import { isValidUrl } from "$lib/url";
+  import { isValidUrl } from "$lib/url";
 
   interface Props {
     isOpen: boolean;
     site: Site | null;
+    categories?: string[];
     onclose?: () => void;
     onsave?: (site: Site) => Promise<boolean>;
   }
 
-  let { isOpen, site, onclose, onsave }: Props = $props();
+  let { isOpen, site, categories = [], onclose, onsave }: Props = $props();
 
   // 表单状态
   let formData = $state<Site>({
@@ -132,7 +133,7 @@
       successMessage = "网站分析完成！";
     } catch (err) {
       console.log(err);
-      
+
       error = err instanceof Error ? err.message : "分析失败，请稍后重试";
     } finally {
       isAnalyzing = false;
@@ -223,28 +224,6 @@
       closeModal();
     }
   }
-
-  // 常用分类选项
-  const categories = [
-    "搜索引擎",
-    "社交媒体",
-    "新闻资讯",
-    "在线工具",
-    "开发工具",
-    "设计资源",
-    "学习教育",
-    "娱乐休闲",
-    "购物商城",
-    "金融理财",
-    "生活服务",
-    "科技数码",
-    "游戏娱乐",
-    "音乐视频",
-    "图片素材",
-    "云存储",
-    "办公软件",
-    "其他",
-  ];
 
   // 常用语言选项
   const languages = [
@@ -454,19 +433,23 @@
               >
                 分类
               </label>
-              <select
+              <input
                 id="category"
+                type="text"
                 bind:value={formData.category}
+                list="category-options"
+                placeholder="请输入或选择分类"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
 								       focus:ring-2 focus:ring-blue-500 focus:border-transparent
-								       bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+								       bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+								       placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSubmitting}
-              >
-                <option value="">请选择分类</option>
+              />
+              <datalist id="category-options">
                 {#each categories as category}
                   <option value={category}>{category}</option>
                 {/each}
-              </select>
+              </datalist>
             </div>
 
             <!-- 标签 -->

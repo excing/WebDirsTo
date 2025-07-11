@@ -19,8 +19,9 @@
 interface Props {
   isOpen: boolean;           // 是否显示模态框
   site: Site | null;         // 要编辑的网站信息，null 表示添加新网站
+  categories?: string[];     // 分类选项列表，可选，默认为空数组
   onclose?: () => void;      // 关闭回调
-  onsave?: (site: Site) => void; // 保存回调
+  onsave?: (site: Site) => Promise<boolean>; // 保存回调，返回 Promise<boolean>
 }
 ```
 
@@ -31,6 +32,7 @@ interface Props {
 ```svelte
 <script lang="ts">
   import EditSiteModal from '$lib/components/EditSiteModal.svelte';
+  import { DEFAULT_CATEGORIES } from '$lib/constants';
   import type { Site } from '$lib/types';
 
   let showModal = $state(false);
@@ -46,9 +48,10 @@ interface Props {
     editingSite = null;
   }
 
-  function handleSave(site: Site) {
+  async function handleSave(site: Site): Promise<boolean> {
     console.log('保存的网站信息:', site);
     // 处理保存逻辑
+    return true; // 返回 true 表示保存成功
   }
 </script>
 
@@ -65,6 +68,7 @@ interface Props {
 <EditSiteModal
   isOpen={showModal}
   site={editingSite}
+  categories={[...DEFAULT_CATEGORIES]}
   onclose={closeModal}
   onsave={handleSave}
 />
@@ -75,7 +79,8 @@ interface Props {
 ```svelte
 <script lang="ts">
   import EditSiteModal from '$lib/components/EditSiteModal.svelte';
-  
+  import { DEFAULT_CATEGORIES } from '$lib/constants';
+
   let sites = $state<Site[]>([]);
   let showEditModal = $state(false);
   let editingSite = $state<Site | null>(null);
@@ -85,15 +90,21 @@ interface Props {
     showEditModal = true;
   }
 
-  function handleSiteUpdate(updatedSite: Site) {
-    // 更新本地数据
-    const index = sites.findIndex(s => s.url === updatedSite.url);
-    if (index !== -1) {
-      sites[index] = updatedSite;
+  async function handleSiteUpdate(updatedSite: Site): Promise<boolean> {
+    try {
+      // 更新本地数据
+      const index = sites.findIndex(s => s.url === updatedSite.url);
+      if (index !== -1) {
+        sites[index] = updatedSite;
+      }
+
+      // 刷新数据或其他处理
+      await refreshData();
+      return true;
+    } catch (error) {
+      console.error('更新失败:', error);
+      return false;
     }
-    
-    // 刷新数据或其他处理
-    refreshData();
   }
 </script>
 
@@ -109,6 +120,7 @@ interface Props {
 <EditSiteModal
   isOpen={showEditModal}
   site={editingSite}
+  categories={[...DEFAULT_CATEGORIES]}
   onclose={() => showEditModal = false}
   onsave={handleSiteUpdate}
 />
@@ -120,7 +132,7 @@ interface Props {
 - **网址** (必填): 网站的 URL，支持自动添加协议
 - **标题** (必填): 网站标题
 - **描述**: 网站描述
-- **分类**: 从预定义分类中选择
+- **分类**: 支持手动输入或从下拉列表选择，分类选项由调用者通过 `categories` 参数提供
 - **标签**: 用逗号分隔的标签列表
 
 ### 高级设置
