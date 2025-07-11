@@ -89,10 +89,15 @@ export async function loadData(): Promise<void> {
 
         const { sites: sitesData, pendingList, archivedList } = result.data;
 
+        const _sites = parseSites(sitesData.content);
+        const _todos = parseTodo(pendingList.content);
+        const _archived = parseSites(archivedList.content);
+
         // 更新状态
-        sites.set(parseSites(sitesData.content));
-        todos.set(parseTodo(pendingList.content));
-        archived.set(parseSites(archivedList.content));
+        updateStores({ sites: _sites, todos: _todos, archived: _archived });
+
+        // 校验并更新 todos 的状态
+        await verifyAndUpdateTodos(_todos, _sites, _archived);
 
         loading.set(false);
     } catch (err) {
@@ -105,8 +110,10 @@ export async function loadData(): Promise<void> {
 // 校验并更新 todos 的状态
 // 1. sites 里的内容需要更新 todo 的 approved 的状态, 如果没有, 则需要添加
 // 2. archived 里的内容需要更新 todo 的 rejected 的状态, 如果没有, 则需要添加
-function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
+async function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
     const updatedTodos = [...todos];
+    let haveUpdate = false;
+
     sites.forEach(site => {
         const todoIndex = updatedTodos.findIndex(todo => isSameUrl(todo.url, site.url));
         if (todoIndex === -1) {
@@ -119,8 +126,10 @@ function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
                 submittedAt: new Date().toISOString(),
                 status: 'approved'
             });
-        } else {
+            haveUpdate = true;
+        } else if (updatedTodos[todoIndex].status !== 'approved') {
             updatedTodos[todoIndex].status = 'approved';
+            haveUpdate = true;
         }
     });
     archived.forEach(site => {
@@ -135,11 +144,102 @@ function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
                 submittedAt: new Date().toISOString(),
                 status: 'rejected'
             });
-        } else {
+            haveUpdate = true;
+        } else if (updatedTodos[todoIndex].status !== 'rejected') {
             updatedTodos[todoIndex].status = 'rejected';
+            haveUpdate = true;
         }
     });
-    return updatedTodos;
+
+    // 没有需要修改的
+    if (!haveUpdate) return;
+
+    try {
+        // 准备 GitHub 更新
+        const blobs: GitHubBlob[] = [
+            {
+                path: DATA_FILES.PENDING,
+                content: serializeTodo(updatedTodos)
+            }
+        ];
+
+        const result = await commitToGitHub(blobs, 'todo 校验和更新成功', 'todo 校验和更新失败');
+
+        if (result.success) {
+            // 更新状态
+            updateStores({ todos: updatedTodos });
+        }
+
+    } catch (err) {
+        console.error('Reject site error:', err);
+        return {
+            success: false,
+            message: err instanceof Error ? err.message : 'todo 校验和更新失败'
+        };
+    }
+}
+
+// 通用的获取当前状态函数
+function getCurrentStoreValues() {
+    let currentSites: Site[] = [];
+    let currentTodos: Todo[] = [];
+    let currentArchived: Site[] = [];
+
+    sites.subscribe(value => currentSites = value)();
+    todos.subscribe(value => currentTodos = value)();
+    archived.subscribe(value => currentArchived = value)();
+
+    return { currentSites, currentTodos, currentArchived };
+}
+
+// 通用的 GitHub 提交处理函数
+async function commitToGitHub(
+    blobs: GitHubBlob[],
+    successMessage: string,
+    errorMessage: string = '操作失败'
+): Promise<{ success: boolean; message: string }> {
+    try {
+        const response = await API.commits(blobs);
+
+        if (!response.ok) {
+            const result = await response.json();
+            return {
+                success: false,
+                message: result.message || errorMessage
+            };
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            return {
+                success: true,
+                message: successMessage
+            };
+        } else {
+            return {
+                success: false,
+                message: result.message || errorMessage
+            };
+        }
+    } catch (err) {
+        console.error('GitHub commit error:', err);
+        return {
+            success: false,
+            message: err instanceof Error ? err.message : errorMessage
+        };
+    }
+}
+
+// 通用的状态更新函数
+function updateStores(updates: {
+    sites?: Site[];
+    todos?: Todo[];
+    archived?: Site[];
+}) {
+    if (updates.sites !== undefined) sites.set(updates.sites);
+    if (updates.todos !== undefined) todos.set(updates.todos);
+    if (updates.archived !== undefined) archived.set(updates.archived);
 }
 
 /**
@@ -148,11 +248,7 @@ function verifyAndUpdateTodos(todos: Todo[], sites: Site[], archived: Site[]) {
 export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean; message?: string }> {
     try {
         // 获取当前状态
-        let currentSites: Site[] = [];
-        let currentArchived: Site[] = [];
-
-        sites.subscribe(value => currentSites = value)();
-        archived.subscribe(value => currentArchived = value)();
+        const { currentSites, currentTodos, currentArchived } = getCurrentStoreValues();
 
         // 从 sites 中移除
         const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, siteToDelete.url));
@@ -162,9 +258,6 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
                 message: '未找到要删除的网站'
             };
         }
-
-        let currentTodos: Todo[] = [];
-        todos.subscribe(value => currentTodos = value)();
 
         // 更新 todo 状态为 rejected
         const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, siteToDelete.url));
@@ -202,34 +295,18 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
             }
         ];
 
-        const response = await API.commits(blobs);
-
-        if (!response.ok) {
-            const result = await response.json();
-            return {
-                success: false,
-                message: result.message || '删除失败'
-            };
-        }
-
-        const result = await response.json();
+        const result = await commitToGitHub(blobs, '网站已删除并归档', '删除失败');
 
         if (result.success) {
             // 更新状态
-            sites.set(updatedSites);
-            archived.set(updatedArchived);
-            todos.set(updatedTodos);
-
-            return {
-                success: true,
-                message: '网站已删除并归档'
-            };
-        } else {
-            return {
-                success: false,
-                message: result.message || '删除失败'
-            };
+            updateStores({
+                sites: updatedSites,
+                archived: updatedArchived,
+                todos: updatedTodos
+            });
         }
+
+        return result;
     } catch (err) {
         console.error('Delete site error:', err);
         return {
@@ -245,8 +322,7 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
 export async function editSite(originalSite: Site, updatedSite: Site): Promise<{ success: boolean; message?: string }> {
     try {
         // 获取当前状态
-        let currentSites: Site[] = [];
-        sites.subscribe(value => currentSites = value)();
+        const { currentSites } = getCurrentStoreValues();
 
         // 找到并更新网站
         const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, originalSite.url));
@@ -268,32 +344,14 @@ export async function editSite(originalSite: Site, updatedSite: Site): Promise<{
             }
         ];
 
-        const response = await API.commits(blobs);
-
-        if (!response.ok) {
-            const result = await response.json();
-            return {
-                success: false,
-                message: result.message || '编辑失败'
-            };
-        }
-
-        const result = await response.json();
+        const result = await commitToGitHub(blobs, '网站信息已更新', '编辑失败');
 
         if (result.success) {
             // 更新状态
-            sites.set(updatedSites);
-
-            return {
-                success: true,
-                message: '网站信息已更新'
-            };
-        } else {
-            return {
-                success: false,
-                message: result.message || '编辑失败'
-            };
+            updateStores({ sites: updatedSites });
         }
+
+        return result;
     } catch (err) {
         console.error('Edit site error:', err);
         return {
@@ -309,11 +367,7 @@ export async function editSite(originalSite: Site, updatedSite: Site): Promise<{
 export async function approveSite(todoToApprove: Todo, siteData: Site): Promise<{ success: boolean; message?: string }> {
     try {
         // 获取当前状态
-        let currentTodos: Todo[] = [];
-        let currentSites: Site[] = [];
-
-        todos.subscribe(value => currentTodos = value)();
-        sites.subscribe(value => currentSites = value)();
+        const { currentTodos, currentSites } = getCurrentStoreValues();
 
         // 更新 todo 状态为 approved
         const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, todoToApprove.url));
@@ -340,33 +394,17 @@ export async function approveSite(todoToApprove: Todo, siteData: Site): Promise<
             }
         ];
 
-        const response = await API.commits(blobs);
-
-        if (!response.ok) {
-            const result = await response.json();
-            return {
-                success: false,
-                message: result.message || '批准失败'
-            };
-        }
-
-        const result = await response.json();
+        const result = await commitToGitHub(blobs, '网站已批准并上线', '批准失败');
 
         if (result.success) {
             // 更新状态
-            todos.set(updatedTodos);
-            sites.set(updatedSites);
-
-            return {
-                success: true,
-                message: '网站已批准并上线'
-            };
-        } else {
-            return {
-                success: false,
-                message: result.message || '批准失败'
-            };
+            updateStores({
+                todos: updatedTodos,
+                sites: updatedSites
+            });
         }
+
+        return result;
     } catch (err) {
         console.error('Approve site error:', err);
         return {
@@ -382,8 +420,7 @@ export async function approveSite(todoToApprove: Todo, siteData: Site): Promise<
 export async function rejectSite(todoToReject: Todo, reason?: string): Promise<{ success: boolean; message?: string }> {
     try {
         // 获取当前状态
-        let currentTodos: Todo[] = [];
-        todos.subscribe(value => currentTodos = value)();
+        const { currentTodos } = getCurrentStoreValues();
 
         // 更新 todo 状态为 rejected
         const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, todoToReject.url));
@@ -405,32 +442,15 @@ export async function rejectSite(todoToReject: Todo, reason?: string): Promise<{
             }
         ];
 
-        const response = await API.commits(blobs);
-
-        if (!response.ok) {
-            const result = await response.json();
-            return {
-                success: false,
-                message: result.message || '拒绝失败'
-            };
-        }
-
-        const result = await response.json();
+        const successMessage = reason ? `网站已拒绝: ${reason}` : '网站已拒绝';
+        const result = await commitToGitHub(blobs, successMessage, '拒绝失败');
 
         if (result.success) {
             // 更新状态
-            todos.set(updatedTodos);
-
-            return {
-                success: true,
-                message: reason ? `网站已拒绝: ${reason}` : '网站已拒绝'
-            };
-        } else {
-            return {
-                success: false,
-                message: result.message || '拒绝失败'
-            };
+            updateStores({ todos: updatedTodos });
         }
+
+        return result;
     } catch (err) {
         console.error('Reject site error:', err);
         return {
