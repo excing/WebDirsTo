@@ -31,7 +31,6 @@
   let processingSubmissions = new Set<string>();
   let successMessage = '';
   let errorMessage = '';
-  let isRefreshing = false;
 
   // 编辑网站模态框状态
   let showEditModal = false;
@@ -196,25 +195,6 @@
     return true; // 立即返回 true 让模态框关闭
   }
 
-  // 刷新数据
-  async function refreshData() {
-    isRefreshing = true;
-    try {
-      await loadData();
-
-      if (!$loading) {
-        successMessage = '数据已刷新';
-        setTimeout(() => successMessage = '', 3000);
-      }
-    } catch (error) {
-      console.error('Refresh error:', error);
-      errorMessage = '刷新失败，请稍后重试';
-      setTimeout(() => errorMessage = '', 5000);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-
   function addSetItem(item:string) {
     processingSubmissions.add(item);
     processingSubmissions = new Set(processingSubmissions);
@@ -248,8 +228,6 @@
   <!-- 顶部导航 -->
   <AdminNavigation
     username={data.session.username}
-    {isRefreshing}
-    onRefresh={refreshData}
   />
 
   <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">

@@ -71,8 +71,14 @@ export const pendingTodos = derived(
 /**
  * 加载所有数据
  */
-export async function loadData(): Promise<void> {
+export async function loadData(): Promise<boolean> {
     loading.set(true);
+    const ok = await frefreshData();
+    loading.set(false);
+    return ok;
+}
+
+export async function frefreshData(): Promise<boolean> {
     error.set(null);
 
     try {
@@ -100,11 +106,12 @@ export async function loadData(): Promise<void> {
         // 校验并更新 todos 的状态
         await verifyAndUpdateTodos(_todos, _sites, _archived);
 
-        loading.set(false);
+        return true;
     } catch (err) {
         console.error('Failed to load sites data:', err);
         error.set(err instanceof Error ? err.message : '加载数据失败');
-        loading.set(false);
+
+        throw err;
     }
 }
 

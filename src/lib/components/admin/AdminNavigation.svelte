@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { APP_NAME } from "$lib/constants.js";
-	import { logout } from "$lib/client/sites";
+	import { frefreshData, loadData, logout } from "$lib/client/sites";
 	import { goto } from "$app/navigation";
 
 	interface Props {
@@ -27,6 +27,8 @@
 		onBack,
 	}: Props = $props();
 
+	let refreshText = $state("刷新");
+
 	async function handleLogout() {
 		if (onLogout) {
 			onLogout();
@@ -40,9 +42,23 @@
 		}
 	}
 
-	function handleRefresh() {
+	async function handleRefresh() {
 		if (onRefresh) {
 			onRefresh();
+		} else {
+			isRefreshing = true;
+			try {
+				await frefreshData();
+
+				refreshText = "已刷新";
+				setTimeout(() => (refreshText = "刷新"), 3000);
+			} catch (error) {
+				console.error("Refresh error:", error);
+				refreshText = "刷新失败";
+				setTimeout(() => (refreshText = "刷新"), 5000);
+			} finally {
+				isRefreshing = false;
+			}
 		}
 	}
 
@@ -130,7 +146,7 @@
 						></path>
 					</svg>
 					<span class="hidden sm:inline"
-						>{isRefreshing ? "刷新中..." : "刷新"}</span
+						>{isRefreshing ? "刷新中..." : refreshText}</span
 					>
 				</button>
 

@@ -5,20 +5,6 @@
 
   export let data: PageData;
 
-  let isRefreshing = false;
-
-  async function refreshData() {
-    isRefreshing = true;
-    try {
-      // 模拟刷新数据
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('网站数据已刷新');
-    } catch (error) {
-      console.error('刷新失败:', error);
-    } finally {
-      isRefreshing = false;
-    }
-  }
 </script>
 
 <svelte:head>
@@ -30,11 +16,9 @@
   <!-- 顶部导航 - 带返回按钮 -->
   <AdminNavigation
     username={data.session.username}
-    {isRefreshing}
     showBackButton={true}
     backUrl="/admin/dashboard"
     backText="返回仪表板"
-    onRefresh={refreshData}
   />
 
   <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">

@@ -6,21 +6,6 @@
 
   export let data: PageData;
 
-  let isRefreshing = false;
-
-  async function refreshData() {
-    isRefreshing = true;
-    try {
-      // 模拟刷新数据
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('提交数据已刷新');
-    } catch (error) {
-      console.error('刷新失败:', error);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-
   // 自定义返回逻辑
   function handleCustomBack() {
     console.log('执行自定义返回逻辑');
@@ -37,11 +22,9 @@
   <!-- 顶部导航 - 带自定义返回逻辑 -->
   <AdminNavigation
     username={data.session.username}
-    {isRefreshing}
     showBackButton={true}
-    backText="返回主页"
-    onRefresh={refreshData}
-    onBack={handleCustomBack}
+    backUrl="/admin/dashboard"
+    backText="返回仪表板"
   />
 
   <div class="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
