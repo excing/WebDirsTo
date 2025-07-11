@@ -277,7 +277,7 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
         }
 
         const updatedSites = currentSites.filter(site => !isSameUrl(site.url, siteToDelete.url));
-        const updatedArchived = [...currentArchived, siteToDelete];
+        const updatedArchived = [siteToDelete, ...currentArchived];
 
         // 准备 GitHub 更新
         const blobs: GitHubBlob[] = [
@@ -380,7 +380,7 @@ export async function approveSite(todoToApprove: Todo, siteData: Site): Promise<
 
         const updatedTodos = [...currentTodos];
         updatedTodos[todoIndex] = { ...todoToApprove, status: 'approved' };
-        const updatedSites = [...currentSites, siteData];
+        const updatedSites = [siteData, ...currentSites];
 
         // 准备 GitHub 更新
         const blobs: GitHubBlob[] = [
