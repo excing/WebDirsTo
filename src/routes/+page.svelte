@@ -95,7 +95,8 @@
 						supportsPWA: false,
 						supportsHTTPS: true,
 						recommendation: '',
-						createdAt: ''
+						createdAt: '',
+						ogImage: '',
 					} as Site));
 			return [...sites, ...newSites];
 		}

@@ -102,45 +102,6 @@ export async function loadData(): Promise<void> {
 }
 
 /**
- * 1. 提交新网站
- */
-export async function submitSite(url: string): Promise<{ success: boolean; message?: string }> {
-    try {
-        const response = await API.submitSite(url);
-
-        if (!response.ok) {
-            const result = await response.json();
-            return {
-                success: false,
-                message: result.error || result.message || '提交失败'
-            };
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-            // 重新加载数据以获取最新状态
-            await loadData();
-            return {
-                success: true,
-                message: result.message || '提交成功'
-            };
-        } else {
-            return {
-                success: false,
-                message: result.error || result.message || '提交失败'
-            };
-        }
-    } catch (err) {
-        console.error('Submit site error:', err);
-        return {
-            success: false,
-            message: err instanceof Error ? err.message : '网络错误'
-        };
-    }
-}
-
-/**
  * 2.1 删除网站: 从 sites.txt 中删除, 并移动到 404.txt 中
  */
 export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean; message?: string }> {

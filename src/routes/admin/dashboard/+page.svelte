@@ -94,22 +94,7 @@
 
     try {
       // 创建网站数据
-      const siteData: Site = {
-        title: submission.url,
-        url: submission.url,
-        favicon: '',
-        description: '',
-        category: '其他',
-        tags: [],
-        ageRating: 'SFW',
-        language: 'zh-CN',
-        starred: false,
-        supportsPWA: false,
-        supportsHTTPS: true,
-        recommendation: '',
-        createdAt: new Date().toISOString(),
-        ogImage: ''
-      };
+      const siteData = await API.analyzeSite(submission.url);
 
       const result = await approveSite(submission, siteData);
 
