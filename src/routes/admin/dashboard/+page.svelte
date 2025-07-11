@@ -24,7 +24,7 @@
     rejectSite
   } from '$lib/client/sites';
 
-  export let session: PageData;
+  export let data: PageData;
 
   let processingSubmissions = new Set<string>();
   let isLoggingOut = false;
@@ -261,7 +261,7 @@
         <div class="flex items-center space-x-2 sm:space-x-4">
           <!-- 用户信息 - 在小屏幕上隐藏 -->
           <span class="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
-            欢迎，{session?.username}
+            欢迎，{data.session.username}
           </span>
 
           <!-- 刷新按钮 -->
