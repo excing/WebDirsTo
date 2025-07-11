@@ -68,7 +68,7 @@
   // 客户端渲染完成后设置加载状态
   onMount(() => {
     // 使用 sites 模块加载数据
-    console.log($sites);
+    // console.log($sites);
 
     if (!$sites || 0 == $sites.length) loadData();
   });

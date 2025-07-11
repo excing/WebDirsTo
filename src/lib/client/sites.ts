@@ -9,6 +9,7 @@
 // 2.4 拒绝网站: 从 todo.csv 中更新状态为 rejected
 
 import { writable, derived } from 'svelte/store';
+import { request } from '$lib/fetch';
 import { API } from './api';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
 import { DATA_FILES, DEFAULT_CATEGORIES } from '$lib/constants';
@@ -456,6 +457,37 @@ export async function rejectSite(todoToReject: Todo, reason?: string): Promise<{
         return {
             success: false,
             message: err instanceof Error ? err.message : '拒绝失败'
+        };
+    }
+}
+
+/**
+ * 管理员登出
+ */
+export async function logout(): Promise<{ success: boolean; message?: string }> {
+    try {
+        await request('/api/admin/auth', {
+            method: 'DELETE'
+        });
+
+        // 清除本地状态
+        sites.set([]);
+        todos.set([]);
+        archived.set([]);
+        loading.set(true);
+        error.set(null);
+
+        console.log('Logout success');
+
+        return {
+            success: true,
+            message: '登出成功'
+        };
+    } catch (err) {
+        console.error('Logout error:', err);
+        return {
+            success: false,
+            message: err instanceof Error ? err.message : '登出失败'
         };
     }
 }
