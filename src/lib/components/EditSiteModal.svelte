@@ -2,6 +2,7 @@
   import { API } from "$lib/client/api";
   import type { Site } from "$lib/types";
   import { isValidUrl } from "$lib/url";
+  import DropdownSelect from "./DropdownSelect.svelte";
 
   interface Props {
     isOpen: boolean;
@@ -225,6 +226,11 @@
     }
   }
 
+  // 处理分类变化
+  function handleCategoryChange(value: string) {
+    formData.category = value;
+  }
+
   // 常用语言选项
   const languages = [
     { code: "zh-CN", name: "简体中文" },
@@ -433,23 +439,14 @@
               >
                 分类
               </label>
-              <input
-                id="category"
-                type="text"
+              <DropdownSelect
                 bind:value={formData.category}
-                list="category-options"
+                options={categories}
                 placeholder="请输入或选择分类"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-								       focus:ring-2 focus:ring-blue-500 focus:border-transparent
-								       bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-								       placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSubmitting}
+                allowCustom={true}
+                onchange={handleCategoryChange}
               />
-              <datalist id="category-options">
-                {#each categories as category}
-                  <option value={category}>{category}</option>
-                {/each}
-              </datalist>
             </div>
 
             <!-- 标签 -->

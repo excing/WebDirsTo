@@ -12,10 +12,10 @@ EditSiteModal 组件现在支持可配置的分类选项，分类字段支持手
 - 支持动态更新分类选项
 
 ### 2. 手动输入 + 下拉选择
-- 使用 HTML5 `<input>` + `<datalist>` 组合
+- 使用自定义下拉组件，移动端友好
 - 用户可以手动输入任意分类名称
 - 也可以从下拉列表中选择预定义的分类
-- 支持自动补全功能
+- 支持实时搜索过滤功能
 
 ## 使用示例
 
@@ -165,31 +165,42 @@ EditSiteModal 组件现在支持可配置的分类选项，分类字段支持手
 
 ### HTML 结构
 ```html
-<input
-  type="text"
-  list="category-options"
-  placeholder="请输入或选择分类"
-  bind:value={formData.category}
-/>
-<datalist id="category-options">
-  {#each categories as category}
-    <option value={category}></option>
-  {/each}
-</datalist>
+<div class="relative">
+  <input
+    type="text"
+    placeholder="请输入或选择分类"
+    bind:value={formData.category}
+    onfocus={handleCategoryInputFocus}
+    onblur={handleCategoryInputBlur}
+  />
+  <button onclick={toggleCategoryDropdown} aria-label="展开分类选项">
+    <svg class:rotate-180={showCategoryDropdown}>...</svg>
+  </button>
+
+  {#if showCategoryDropdown}
+    <div class="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg">
+      {#each getFilteredCategories() as category}
+        <button onclick={() => selectCategory(category)}>
+          {category}
+        </button>
+      {/each}
+    </div>
+  {/if}
+</div>
 ```
 
 ### 优势
-- 使用原生 HTML5 功能，无需额外 JavaScript
-- 良好的浏览器兼容性
-- 自动支持无障碍访问
-- 轻量级实现，性能优秀
+- 移动端友好，完全自定义的交互体验
+- 良好的浏览器兼容性，支持所有现代浏览器
+- 支持无障碍访问，包含正确的 ARIA 标签
+- 实时搜索过滤，用户体验优秀
 
 ## 注意事项
 
 1. **类型安全**: `categories` 参数是可选的，默认为空数组
 2. **数据验证**: 用户输入的分类名称会被保存，无论是否在预定义列表中
-3. **性能考虑**: 对于大量分类选项，建议实现搜索过滤功能
-4. **浏览器支持**: datalist 在所有现代浏览器中都有良好支持
+3. **性能考虑**: 对于大量分类选项，已实现实时搜索过滤功能
+4. **移动端支持**: 自定义下拉组件在移动端有更好的用户体验
 
 ## 迁移指南
 
