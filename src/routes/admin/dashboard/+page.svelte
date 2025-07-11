@@ -24,6 +24,8 @@
     rejectSite
   } from '$lib/client/sites';
 
+  import { API } from '$lib/client/api';
+
   export let data: PageData;
 
   let processingSubmissions = new Set<string>();
@@ -88,7 +90,7 @@
 
   // 快速批准提交
   async function quickApprove(submission: Todo) {
-    processingSubmissions.add(submission.url);
+    addSetItem(submission.url);
 
     try {
       // 创建网站数据
@@ -123,14 +125,14 @@
       errorMessage = '批准失败，请稍后重试';
       setTimeout(() => errorMessage = '', 5000);
     } finally {
-      processingSubmissions.delete(submission.url);
-      processingSubmissions = new Set(processingSubmissions);
+      delSetItem(submission.url);
+      
     }
   }
 
   // 快速拒绝提交
   async function quickReject(submission: Todo) {
-    processingSubmissions.add(submission.url);
+    addSetItem(submission.url);
 
     try {
       const result = await rejectSite(submission, '不符合要求');
@@ -147,8 +149,25 @@
       errorMessage = '拒绝失败，请稍后重试';
       setTimeout(() => errorMessage = '', 5000);
     } finally {
-      processingSubmissions.delete(submission.url);
-      processingSubmissions = new Set(processingSubmissions);
+      delSetItem(submission.url);
+      
+    }
+  }
+
+  async function quickAnalyze(submission: Todo) {
+    addSetItem(submission.url);
+
+    try {
+      const result = await API.analyzeSite(submission.url);
+
+      editSite(result);
+    } catch (err) {
+      console.error('Reject error:', err);
+      errorMessage = '分析失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      delSetItem(submission.url);
+      
     }
   }
 
@@ -226,6 +245,15 @@
     }
   }
 
+  function addSetItem(item:string) {
+    processingSubmissions.add(item);
+    processingSubmissions = new Set(processingSubmissions);
+  }
+
+  function delSetItem(item:string) {
+    processingSubmissions.delete(item);
+    processingSubmissions = new Set(processingSubmissions);
+  }
 
 </script>
 
@@ -493,6 +521,7 @@
                   isProcessing={processingSubmissions.has(submission.url)}
                   onApprove={quickApprove}
                   onReject={quickReject}
+                  onAnalyze={quickAnalyze}
                 />
               {/each}
             </div>
