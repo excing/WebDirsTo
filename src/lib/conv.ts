@@ -80,7 +80,7 @@ export function parseTodo(content: string): Todo[] {
     const todos: Todo[] = [];
 
     // url,ip_address,language,os,browser,submitted_at,status
-    const lines = content.split('\n').filter(line => line.trim() !== '');
+    const lines = content.split('\n').slice(1).filter(line => line.trim() !== '');
     for (const line of lines) {
         const [url, ip, language, os, browser, submittedAt, status]
             = line.split(',').map(field => field.replace(/^"|"$/g, ''));
@@ -100,7 +100,7 @@ export function parseTodo(content: string): Todo[] {
 
 // Todo 对象序列化为 todo.csv 格式
 export function serializeTodo(todos: Todo[]): string {
-    return todos.map(todo => [
+    return "url,ip_address,language,os,browser,submitted_at,status\n" + todos.map(todo => [
         stringDef(todo.url, PLACEHOLDERS.todo.url),
         stringDef(todo.ip, PLACEHOLDERS.todo.ip),
         stringDef(todo.language, PLACEHOLDERS.todo.language),
