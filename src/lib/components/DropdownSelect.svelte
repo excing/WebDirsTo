@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { autoScroll } from "$lib/actions/autoScroll";
+
   interface Props {
     value: string;
     options: string[];
@@ -229,13 +231,13 @@
         {#if filteredOptions.length > 0}
           {#each filteredOptions as option, index}
             <button
+              use:autoScroll={index === highlightedIndex}
               type="button"
               class="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 
                      text-gray-900 dark:text-white transition-colors border-none bg-transparent
                      {index === highlightedIndex ? 'bg-gray-100 dark:bg-gray-600' : ''}
                      {value === option ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}"
               onclick={(e) => handleOptionClick(option, e)}
-              onmouseenter={() => highlightedIndex = index}
             >
               {option}
             </button>
