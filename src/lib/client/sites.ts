@@ -26,15 +26,18 @@ export const stats = derived(
     [sites, todos, archived],
     ([$sites, $todos, $archived]) => {
         const categoryCounts: Record<string, number> = {};
-        const categories: string[] = [...DEFAULT_CATEGORIES];
-        const usedCategories: string[] = [];
+        const categories: string[] = [];
         $sites.forEach(site => {
             categoryCounts[site.category] = (categoryCounts[site.category] || 0) + 1;
-            if (!usedCategories.includes(site.category)) {
-                usedCategories.unshift(site.category);
+            if (!categories.includes(site.category)) {
+                categories.unshift(site.category);
             }
         });
-        categories.unshift(...usedCategories);
+        DEFAULT_CATEGORIES.forEach(element => {
+            if (!categories.includes(element)) {
+                categories.push(element);
+            }
+        });
 
         return {
             totalSites: $sites.length,

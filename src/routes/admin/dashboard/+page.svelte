@@ -14,6 +14,7 @@
     loading,
     error,
     stats,
+    sites,
     recentSites,
     pendingTodos,
     loadData,
@@ -66,7 +67,9 @@
   // 客户端渲染完成后设置加载状态
   onMount(() => {
     // 使用 sites 模块加载数据
-    loadData();
+    console.log($sites);
+
+    if (!$sites || 0 == $sites.length) loadData();
   });
 
   async function handleLogout() {
@@ -345,7 +348,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
       {#each statsCards as card}
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
+          <div class="p-3 sm:p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
                 <svg class="h-6 w-6 {card.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
