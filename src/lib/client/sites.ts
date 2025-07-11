@@ -11,7 +11,7 @@
 import { writable, derived } from 'svelte/store';
 import { API } from './api';
 import { parseSites, parseTodo, serializeSites, serializeTodo } from '$lib/conv';
-import { DATA_FILES } from '$lib/constants';
+import { DATA_FILES, DEFAULT_CATEGORIES } from '$lib/constants';
 import type { Site, Todo, GitHubBlob } from '$lib/types';
 
 // 使用 Svelte store 进行状态管理
@@ -26,9 +26,15 @@ export const stats = derived(
     [sites, todos, archived],
     ([$sites, $todos, $archived]) => {
         const categoryCounts: Record<string, number> = {};
+        const categories: string[] = [...DEFAULT_CATEGORIES];
+        const usedCategories: string[] = [];
         $sites.forEach(site => {
             categoryCounts[site.category] = (categoryCounts[site.category] || 0) + 1;
+            if (!usedCategories.includes(site.category)) {
+                usedCategories.unshift(site.category);
+            }
         });
+        categories.unshift(...usedCategories);
 
         return {
             totalSites: $sites.length,
@@ -37,7 +43,8 @@ export const stats = derived(
             rejectedSubmissions: $todos.filter(todo => todo.status === 'rejected').length,
             starredSites: $sites.filter(site => site.starred).length,
             archivedSites: $archived.length,
-            categoryCounts
+            categoryCounts,
+            categories,
         };
     }
 );

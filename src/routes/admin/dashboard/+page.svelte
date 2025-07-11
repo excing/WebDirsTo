@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { APP_NAME, DEFAULT_CATEGORIES } from '$lib/constants.js';
+  import { APP_NAME } from '$lib/constants.js';
   import { request } from '$lib/fetch';
   import type { Site, Todo } from '$lib/types.js';
   import { onMount } from 'svelte';
@@ -538,7 +538,7 @@
 <EditSiteModal
   isOpen={showEditModal}
   site={editingSite}
-  categories={[...DEFAULT_CATEGORIES]}
+  categories={[...$stats.categories]}
   onclose={closeEditModal}
   onsave={handleSiteSave}
 />
