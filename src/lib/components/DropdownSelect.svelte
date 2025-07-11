@@ -51,7 +51,9 @@
   }
 
   // 切换下拉框状态
-  function toggleDropdown() {
+  function toggleDropdown(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
     if (isOpen) {
       closeDropdown();
     } else {
@@ -71,9 +73,9 @@
     const target = event.target as HTMLInputElement;
     value = target.value;
     
-    if (!isOpen) {
-      openDropdown();
-    }
+    // if (!isOpen) {
+    //   openDropdown();
+    // }
     
     highlightedIndex = -1;
     onchange?.(target.value);
@@ -147,7 +149,16 @@
     event.preventDefault();
     event.stopPropagation();
     selectOption(option);
+  }
+
+  // 清空输入
+  function clearInput(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    value = '';
+    closeDropdown();
     inputRef?.focus();
+    onchange?.('');
   }
 
   // 点击外部关闭
@@ -180,7 +191,7 @@
       {placeholder}
       {disabled}
       readonly={!allowCustom}
-      class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg
+      class="w-full px-3 py-2 pr-16 border border-gray-300 dark:border-gray-600 rounded-lg
              focus:ring-2 focus:ring-blue-500 focus:border-transparent
              bg-white dark:bg-gray-700 text-gray-900 dark:text-white
              placeholder-gray-500 dark:placeholder-gray-400
@@ -190,10 +201,34 @@
       onfocus={handleFocus}
       onblur={handleBlur}
       onkeydown={handleKeydown}
-      onclick={!allowCustom ? toggleDropdown : undefined}
       autocomplete="off"
     />
-    
+        
+    <!-- 删除按钮 -->
+    {#if value && !disabled}
+      <button
+        type="button"
+        onclick={clearInput}
+        class="absolute inset-y-0 right-8 flex items-center px-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300
+               transition-colors"
+        aria-label="清空输入"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    {/if}
+
     <!-- 下拉箭头 -->
     <button
       type="button"

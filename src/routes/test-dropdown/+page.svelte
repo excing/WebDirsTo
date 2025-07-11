@@ -5,7 +5,7 @@
   // 测试数据
   let category1 = $state('');
   let category2 = $state('搜索引擎');
-  let category3 = $state('');
+  let category3 = $state('选项1');
   let category4 = $state('');
   let isDisabled = $state(false);
 
@@ -183,6 +183,7 @@
             <ul class="mt-1 ml-4 list-disc">
               <li>点击输入框打开下拉框</li>
               <li>点击箭头切换状态</li>
+              <li>点击 × 按钮清空输入</li>
               <li>悬停高亮选项</li>
               <li>点击外部关闭</li>
             </ul>
@@ -193,6 +194,15 @@
               <li>输入文本实时过滤选项</li>
               <li>支持部分匹配</li>
               <li>不区分大小写</li>
+            </ul>
+          </div>
+          <div>
+            <strong class="text-gray-900 dark:text-white">清空功能:</strong>
+            <ul class="mt-1 ml-4 list-disc">
+              <li>有内容时显示 × 删除按钮</li>
+              <li>点击删除按钮清空输入并关闭下拉框</li>
+              <li>清空后自动聚焦回输入框</li>
+              <li>禁用状态下不显示删除按钮</li>
             </ul>
           </div>
         </div>
