@@ -7,7 +7,7 @@
     isOpen: boolean;
     site: Site | null;
     onclose?: () => void;
-    onsave?: (site: Site) => boolean;
+    onsave?: (site: Site) => Promise<boolean>;
   }
 
   let { isOpen, site, onclose, onsave }: Props = $props();
@@ -191,7 +191,7 @@
       };
 
       // 触发保存事件
-      if (onsave?.(siteToSave)) {
+      if (await onsave?.(siteToSave)) {
         successMessage = "保存成功！";
 
         // 延迟关闭模态框

@@ -9,55 +9,55 @@
   import PendingSubmissionItem from '$lib/components/admin/PendingSubmissionItem.svelte';
   import RecentSiteItem from '$lib/components/admin/RecentSiteItem.svelte';
 
-  export let session: PageData;
+  // 导入 sites 模块
+  import {
+    loading,
+    error,
+    stats,
+    recentSites,
+    pendingTodos,
+    loadData,
+    deleteSite as deleteSiteAction,
+    editSite as editSiteAction,
+    approveSite,
+    rejectSite
+  } from '$lib/client/sites';
 
-  let data = {
-      sites: [] as Site[],
-      Todos: [] as Todo[],
-      stats: {
-        totalSites: 0,
-        pendingSubmissions: 0,
-        starredSites: 0,
-        archivedSites: 0,
-        categoryCounts: {}
-      },
-      error: null
-    }
+  export let session: PageData;
 
   let processingSubmissions = new Set<string>();
   let isLoggingOut = false;
   let successMessage = '';
   let errorMessage = '';
   let isRefreshing = false;
-  let isLoading = true;
 
   // 编辑网站模态框状态
   let showEditModal = false;
   let editingSite: Site | null = null;
 
-  // 统计卡片配置
+  // 统计卡片配置 - 使用 store 中的统计数据
   $: statsCards = [
     {
       title: '总网站数',
-      value: data.stats.totalSites,
+      value: $stats.totalSites,
       iconColor: 'text-blue-600',
       iconPath: 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9'
     },
     {
       title: '待审核提交',
-      value: data.stats.pendingSubmissions,
+      value: $stats.pendingSubmissions,
       iconColor: 'text-yellow-600',
       iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
     },
     {
       title: '置顶网站',
-      value: data.stats.starredSites,
+      value: $stats.starredSites,
       iconColor: 'text-green-600',
       iconPath: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'
     },
     {
       title: '已归档网站',
-      value: data.stats.archivedSites,
+      value: $stats.archivedSites,
       iconColor: 'text-red-600',
       iconPath: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
     }
@@ -65,7 +65,8 @@
 
   // 客户端渲染完成后设置加载状态
   onMount(() => {
-    refreshData();
+    // 使用 sites 模块加载数据
+    loadData();
   });
 
   async function handleLogout() {
@@ -82,17 +83,91 @@
     }
   }
 
-
-
+  // 快速批准提交
   async function quickApprove(submission: Todo) {
+    processingSubmissions.add(submission.url);
+
+    try {
+      // 创建网站数据
+      const siteData: Site = {
+        title: submission.url,
+        url: submission.url,
+        favicon: '',
+        description: '',
+        category: '其他',
+        tags: [],
+        ageRating: 'SFW',
+        language: 'zh-CN',
+        starred: false,
+        supportsPWA: false,
+        supportsHTTPS: true,
+        recommendation: '',
+        createdAt: new Date().toISOString(),
+        ogImage: ''
+      };
+
+      const result = await approveSite(submission, siteData);
+
+      if (result.success) {
+        successMessage = result.message || '批准成功';
+        setTimeout(() => successMessage = '', 3000);
+      } else {
+        errorMessage = result.message || '批准失败';
+        setTimeout(() => errorMessage = '', 5000);
+      }
+    } catch (err) {
+      console.error('Approve error:', err);
+      errorMessage = '批准失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      processingSubmissions.delete(submission.url);
+      processingSubmissions = new Set(processingSubmissions);
+    }
   }
 
+  // 快速拒绝提交
   async function quickReject(submission: Todo) {
+    processingSubmissions.add(submission.url);
 
+    try {
+      const result = await rejectSite(submission, '不符合要求');
+
+      if (result.success) {
+        successMessage = result.message || '拒绝成功';
+        setTimeout(() => successMessage = '', 3000);
+      } else {
+        errorMessage = result.message || '拒绝失败';
+        setTimeout(() => errorMessage = '', 5000);
+      }
+    } catch (err) {
+      console.error('Reject error:', err);
+      errorMessage = '拒绝失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    } finally {
+      processingSubmissions.delete(submission.url);
+      processingSubmissions = new Set(processingSubmissions);
+    }
   }
 
+  // 删除网站
   async function deleteSite(site: Site) {
+    if (!confirm(`确定要删除网站 "${site.title}" 吗？`)) return;
 
+    try {
+      const result = await deleteSiteAction(site);
+
+      if (result.success) {
+        successMessage = result.message || '删除成功';
+        setTimeout(() => successMessage = '', 3000);
+      } else {
+        errorMessage = result.message || '删除失败';
+        setTimeout(() => errorMessage = '', 5000);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      errorMessage = '删除失败，请稍后重试';
+      setTimeout(() => errorMessage = '', 5000);
+    }
   }
 
   // 编辑网站
@@ -108,63 +183,36 @@
   }
 
   // 处理网站保存
-  function handleSiteSave(updatedSite: Site): boolean {
-    try {
-      // 更新本地数据中的网站信息
-      const siteIndex = data.sites.findIndex(s => s.url === updatedSite.url);
-      if (siteIndex !== -1) {
-        data.sites[siteIndex] = updatedSite;
-        // 触发响应式更新
-        data.sites = [...data.sites];
+  async function handleSiteSave(updatedSite: Site): Promise<boolean> {
+    // 保存操作
+      try {
+        const result = await editSiteAction(editingSite!, updatedSite);
+
+        if (result.success) {
+          successMessage = result.message || '网站信息已更新';
+          setTimeout(() => successMessage = '', 3000);
+        } else {
+          errorMessage = result.message || '更新失败';
+          setTimeout(() => errorMessage = '', 5000);
+        }
+      } catch (error) {
+        console.error('更新网站信息失败:', error);
+        errorMessage = '更新失败，请稍后重试';
+        setTimeout(() => errorMessage = '', 5000);
+        return false;
       }
-
-      successMessage = '网站信息已更新';
-      setTimeout(() => successMessage = '', 3000);
-
-      return true; // 返回成功状态
-    } catch (error) {
-      console.error('更新网站信息失败:', error);
-      errorMessage = '更新失败，请稍后重试';
-      setTimeout(() => errorMessage = '', 5000);
-      return false; // 返回失败状态
-    }
+    return true; // 立即返回 true 让模态框关闭
   }
 
+  // 刷新数据
   async function refreshData() {
     isRefreshing = true;
     try {
-      // 重新获取数据
-      const [sitesResponse] = await Promise.all([
-        request('/api/admin/sites')
-      ]);
+      await loadData();
 
-      if (sitesResponse.ok) {
-        const sitesResult = await sitesResponse.json();
-        if (sitesResult.success) {
-          // 动态导入解析函数
-          const { parseSites, parseTodo } = await import('$lib/conv');
-
-          const sites = parseSites(sitesResult.data.sites.content || '');
-          const todos = parseTodo(sitesResult.data.pendingList.content || '');
-          const archivedSites = parseSites(sitesResult.data.archivedList.content || '');
-
-          // 更新数据
-          data.sites = sites
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 10);
-
-          data.Todos = todos.filter(todo => todo.status === 'pending').slice(0, 10);
-
-          // 重新计算统计信息
-          data.stats = calculateClientStats(sites, todos, archivedSites);
-
-          if (!isLoading) {
-            successMessage = '数据已刷新';
-            setTimeout(() => successMessage = '', 3000);
-          }
-        }
-      } else {
-        throw new Error('获取数据失败');
+      if (!$loading) {
+        successMessage = '数据已刷新';
+        setTimeout(() => successMessage = '', 3000);
       }
     } catch (error) {
       console.error('Refresh error:', error);
@@ -172,32 +220,10 @@
       setTimeout(() => errorMessage = '', 5000);
     } finally {
       isRefreshing = false;
-      isLoading = false;
     }
   }
 
-  function calculateClientStats(sites: any[], todos: any[], archivedSites: any[]) {
-    const categoryCounts: Record<string, number> = {};
-    sites.forEach(site => {
-      const category = site.category || '未分类';
-      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
 
-    const sortedCategories = Object.entries(categoryCounts)
-      .sort(([,a], [,b]) => b - a)
-      .reduce((obj, [key, value]) => {
-        obj[key] = value;
-        return obj;
-      }, {} as Record<string, number>);
-
-    return {
-      totalSites: sites.length,
-      pendingSubmissions: todos.filter(todo => todo.status === 'pending').length,
-      starredSites: sites.filter(site => site.starred).length,
-      archivedSites: archivedSites.length,
-      categoryCounts: sortedCategories
-    };
-  }
 </script>
 
 <svelte:head>
@@ -207,7 +233,7 @@
 
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
   <!-- 加载状态 -->
-  {#if isLoading}
+  {#if $loading}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -304,13 +330,13 @@
     {/if}
 
     <!-- 服务器错误提示 -->
-    {#if data.error}
+    {#if $error}
       <div class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
         <div class="flex">
           <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
           </svg>
-          <p class="text-sm text-red-800 dark:text-red-200">{data.error}</p>
+          <p class="text-sm text-red-800 dark:text-red-200">{$error}</p>
         </div>
       </div>
     {/if}
@@ -368,7 +394,7 @@
                 <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                 </svg>
-                <span class="truncate">审核提交 ({data.stats.pendingSubmissions})</span>
+                <span class="truncate">审核提交 ({$stats.pendingSubmissions})</span>
               </a>
 
               <a
@@ -425,13 +451,13 @@
             分类统计
           </h3>
           <div class="space-y-3">
-            {#each Object.entries(data.stats.categoryCounts) as [category, count]}
+            {#each Object.entries($stats.categoryCounts) as [category, count]}
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-600 dark:text-gray-400">{category}</span>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">{count}</span>
               </div>
             {/each}
-            {#if Object.keys(data.stats.categoryCounts).length === 0}
+            {#if Object.keys($stats.categoryCounts).length === 0}
               <p class="text-sm text-gray-500 dark:text-gray-400">暂无数据</p>
             {/if}
           </div>
@@ -456,9 +482,9 @@
             </a>
           </div>
 
-          {#if data.Todos.length > 0}
+          {#if $pendingTodos.length > 0}
             <div class="space-y-3">
-              {#each data.Todos.slice(0, 10) as submission}
+              {#each $pendingTodos as submission}
                 <PendingSubmissionItem
                   {submission}
                   isProcessing={processingSubmissions.has(submission.url)}
@@ -488,9 +514,9 @@
             </a>
           </div>
 
-          {#if data.sites.length > 0}
+          {#if $recentSites.length > 0}
             <div class="space-y-3">
-              {#each data.sites as site}
+              {#each $recentSites as site}
                 <RecentSiteItem
                   {site}
                   onEdit={editSite}
