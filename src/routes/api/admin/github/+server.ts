@@ -160,7 +160,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
         // 5. 执行 GitHub 操作
         try {
-            const data = await github.commits(blobs);
+            const data = await github.commits('Batch commit message', blobs);
 
             return json({
                 success: true,
