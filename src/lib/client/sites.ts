@@ -28,12 +28,16 @@ export const stats = derived(
     [sites, todos, archived],
     ([$sites, $todos, $archived]) => {
         const categoryCounts: Record<string, number> = {};
+        const tagCounts: Record<string, number> = {};
         const categories: string[] = [];
         $sites.forEach(site => {
             categoryCounts[site.category] = (categoryCounts[site.category] || 0) + 1;
             if (!categories.includes(site.category)) {
                 categories.unshift(site.category);
             }
+            site.tags.forEach(tag => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
         });
         DEFAULT_CATEGORIES.forEach(element => {
             if (!categories.includes(element)) {
@@ -48,7 +52,11 @@ export const stats = derived(
             rejectedSubmissions: $todos.filter(todo => todo.status === 'rejected').length,
             starredSites: $sites.filter(site => site.starred).length,
             archivedSites: $archived.length,
+            pwaSites: $sites.filter(site => site.supportsPWA).length,
+            httpsSites: $sites.filter(site => site.supportsHTTPS).length,
+            adultSites: $sites.filter(site => site.ageRating === '18+').length,
             categoryCounts,
+            tagCounts,
             categories,
         };
     }
