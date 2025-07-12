@@ -327,36 +327,45 @@ export async function deleteSite(siteToDelete: Site): Promise<{ success: boolean
 /**
  * 2.2 编辑网站: 直接修改 sites.txt 中的内容
  */
-export async function editSite(originalSite: Site, updatedSite: Site): Promise<{ success: boolean; message?: string }> {
+export async function editSite(updatedSite: Site): Promise<{ success: boolean; message?: string }> {
     try {
         // 获取当前状态
-        const { currentSites } = getCurrentStoreValues();
-
-        // 找到并更新网站
-        const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, originalSite.url));
-        if (siteIndex === -1) {
-            return {
-                success: false,
-                message: '未找到要编辑的网站'
-            };
-        }
+        const { currentSites, currentTodos } = getCurrentStoreValues();
 
         const updatedSites = [...currentSites];
-        updatedSites[siteIndex] = { ...updatedSite };
+
+        // 找到并更新网站, 或者新增网站
+        const siteIndex = currentSites.findIndex(site => isSameUrl(site.url, updatedSite.url));
+        if (siteIndex === -1) { // 新增网站
+            updatedSites.unshift(updatedSite);
+        } else {
+            updatedSites[siteIndex] = { ...updatedSite };
+        }
 
         // 准备 GitHub 更新
-        const blobs: GitHubBlob[] = [
+        let blobs: GitHubBlob[] = [
             {
                 path: DATA_FILES.SITES,
                 content: serializeSites(updatedSites)
             }
         ];
 
+        // 更新 todo 状态为 approved
+        const todoIndex = currentTodos.findIndex(todo => isSameUrl(todo.url, updatedSite.url));
+        if (todoIndex != -1) {
+            const updatedTodos = [...currentTodos];
+            updatedTodos[todoIndex].status = 'approved';
+            blobs = [...blobs, {
+                path: DATA_FILES.PENDING,
+                content: serializeTodo(updatedTodos)
+            }]
+        }
+
         const result = await commitToGitHub(blobs, '网站信息已更新', '编辑失败');
 
         if (result.success) {
             // 更新状态
-            updateStores({ sites: updatedSites });
+            updateStores({ sites: updatedSites, todos: currentTodos });
         }
 
         return result;

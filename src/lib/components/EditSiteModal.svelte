@@ -114,15 +114,8 @@
     successMessage = "";
 
     try {
-      const response = await API.analyzeSite(formattedUrl);
-      const result = await response.json();
+      const analyzedSite = await API.analyzeSite(formattedUrl);
 
-      if (!response.ok) {
-        throw new Error(`${result.error}: ${result.message}` || "分析失败");
-      }
-
-      // 更新表单数据
-      const analyzedSite = result.data as Site;
       formData = {
         ...formData,
         ...analyzedSite,
@@ -441,7 +434,7 @@
               </label>
               <DropdownSelect
                 bind:value={formData.category}
-                options={categories}
+                options={[...categories]}
                 placeholder="请输入或选择分类"
                 disabled={isSubmitting}
                 allowCustom={true}

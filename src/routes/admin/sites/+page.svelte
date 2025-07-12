@@ -40,7 +40,7 @@
   $: filteredSites = $sites
     .filter(site => {
       const matchesSearch = !searchQuery ||
-        site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        site.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         site.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
         site.description.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -61,8 +61,8 @@
           bValue = new Date(b.createdAt || 0).getTime();
           break;
         default:
-          aValue = a.name;
-          bValue = b.name;
+          aValue = a.title;
+          bValue = b.title;
       }
 
       if (sortOrder === 'desc') {
@@ -101,14 +101,14 @@
 
   // 删除网站
   async function handleDeleteSite(site: Site) {
-    if (!confirm(`确定要删除网站 "${site.name}" 吗？此操作不可撤销。`)) {
+    if (!confirm(`确定要删除网站 "${site.title}" 吗？此操作不可撤销。`)) {
       return;
     }
 
     try {
       const result = await deleteSiteAction(site);
       if (result.success) {
-        successMessage = `网站 "${site.name}" 已删除`;
+        successMessage = `网站 "${site.title}" 已删除`;
         setTimeout(() => successMessage = '', 3000);
       } else {
         errorMessage = result.message || '删除失败';
@@ -126,20 +126,23 @@
     const updatedSite = site;
 
     try {
-      const result = await editSiteAction(editingSite!, updatedSite);
+      const result = await editSiteAction(updatedSite);
       if (result.success) {
-        successMessage = `网站 "${updatedSite.name}" 已更新`;
+        successMessage = `网站 "${updatedSite.title}" 已更新`;
         setTimeout(() => successMessage = '', 3000);
         showEditModal = false;
         editingSite = null;
+        return true;
       } else {
         errorMessage = result.message || '更新失败';
         setTimeout(() => errorMessage = '', 5000);
+        return false;
       }
     } catch (error) {
       console.error('Edit error:', error);
       errorMessage = '更新失败，请稍后重试';
       setTimeout(() => errorMessage = '', 5000);
+      return false;
     }
   }
 
@@ -454,11 +457,12 @@
     {/if}
 
     <!-- 编辑模态框 -->
-    {#if showEditModal && editingSite}
+    {#if editingSite}
       <EditSiteModal
+        isOpen={showEditModal}
         site={editingSite}
         onsave={handleSaveEdit}
-        oncancel={() => {
+        onclose={() => {
           showEditModal = false;
           editingSite = null;
         }}

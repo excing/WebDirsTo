@@ -131,12 +131,14 @@
 
       editSite(result);
     } catch (err) {
-      console.error('Reject error:', err);
-      errorMessage = '分析失败，请稍后重试';
-      setTimeout(() => errorMessage = '', 5000);
+      const result = {
+        url: submission.url,
+        tags: [] as string[],
+      } as Site;
+
+      editSite(result);
     } finally {
-      delSetItem(submission.url);
-      
+      delSetItem(submission.url);      
     }
   }
 
@@ -175,15 +177,21 @@
 
   // 处理网站保存
   async function handleSiteSave(updatedSite: Site): Promise<boolean> {
+    console.log('保存的网站信息:', updatedSite);
+    
     // 保存操作
       try {
-        const result = await editSiteAction(editingSite!, updatedSite);
+        const result = await editSiteAction(updatedSite);
 
         if (result.success) {
           successMessage = result.message || '网站信息已更新';
+          console.log(successMessage);
+          
           setTimeout(() => successMessage = '', 3000);
         } else {
           errorMessage = result.message || '更新失败';
+          console.log(errorMessage);
+          
           setTimeout(() => errorMessage = '', 5000);
         }
       } catch (error) {

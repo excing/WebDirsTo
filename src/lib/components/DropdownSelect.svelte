@@ -29,7 +29,7 @@
 
   // 过滤后的选项
   let filteredOptions = $derived.by(() => {
-    if (!value.trim()) {
+    if (!value || !value.trim()) {
       return options;
     }
     return options.filter(option =>
