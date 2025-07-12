@@ -1,6 +1,6 @@
 import { AdminAuthService } from "$lib/server/auth";
 import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from "../$types";
 
 export const load: PageServerLoad = async ({ cookies }) => {
   // 检查是否已经登录
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
     throw redirect(302, '/admin');
   }
 
-  // 已登录，显示提交审核页面
+  // 已登录，显示提交管理页面
   return {
     session: {
       username: session.username,
