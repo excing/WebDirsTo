@@ -29,6 +29,8 @@ export const stats = derived(
     ([$sites, $todos, $archived]) => {
         const categoryCounts: Record<string, number> = {};
         const tagCounts: Record<string, number> = {};
+        const dayCounts: Record<string, number> = {}; // 每天的添加数量
+        const monthCounts: Record<string, number> = {}; // 每月的添加数量
         const categories: string[] = [];
         $sites.forEach(site => {
             categoryCounts[site.category] = (categoryCounts[site.category] || 0) + 1;
@@ -38,6 +40,11 @@ export const stats = derived(
             site.tags.forEach(tag => {
                 tagCounts[tag] = (tagCounts[tag] || 0) + 1;
             });
+            const createdAt = new Date(site.createdAt);
+            const dateKey = `${createdAt.getFullYear()}-${createdAt.getMonth() + 1}-${createdAt.getDate()}`;
+            dayCounts[dateKey] = (dayCounts[dateKey] || 0) + 1;
+            const monthKey = `${createdAt.getFullYear()}-${createdAt.getMonth() + 1}}`;
+            monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
         });
         DEFAULT_CATEGORIES.forEach(element => {
             if (!categories.includes(element)) {
@@ -57,6 +64,8 @@ export const stats = derived(
             adultSites: $sites.filter(site => site.ageRating === '18+').length,
             categoryCounts,
             tagCounts,
+            dayCounts,
+            monthCounts,
             categories,
         };
     }
