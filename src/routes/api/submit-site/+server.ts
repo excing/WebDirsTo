@@ -42,7 +42,8 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress 
 			}
 			const todoItem = todo(url, getClientAddress(), request);
 			// console.log('todoItem:', todoItem);
-			const todoContent = `${todoContents.content}\n${serializeTodo([todoItem])}`;
+			const updatedTodos = [todoItem, ...todos];
+			const todoContent = serializeTodo(updatedTodos);
 			await github.updateFile(DATA_FILES.PENDING, todoContent, `Add todo: ${todoItem.url}`, todoContents.sha);
 		} else {
 			const sitesContents = await github.getFileContents(DATA_FILES.SITES);
