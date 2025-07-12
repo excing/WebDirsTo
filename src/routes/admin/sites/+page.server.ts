@@ -1,6 +1,6 @@
 import { AdminAuthService } from "$lib/server/auth";
 import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from "../$types";
 
 export const load: PageServerLoad = async ({ cookies }) => {
   // 检查是否已经登录
