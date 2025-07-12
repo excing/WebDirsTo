@@ -17,7 +17,8 @@
     todos,
     loadData,
     approveSite,
-    rejectSite
+    rejectSite,
+    editSite as editSiteAction,
   } from '$lib/client/sites';
 
   import { API } from '$lib/client/api';
@@ -234,8 +235,30 @@
 
   // 处理网站保存
   async function handleSiteSave(updatedSite: Site): Promise<boolean> {
-    // 这里可以实现保存逻辑，或者直接批准
-    return true;
+    console.log('保存的网站信息:', updatedSite);
+    
+    // 保存操作
+      try {
+        const result = await editSiteAction(updatedSite);
+
+        if (result.success) {
+          successMessage = result.message || '网站信息已更新';
+          console.log(successMessage);
+          
+          setTimeout(() => successMessage = '', 3000);
+        } else {
+          errorMessage = result.message || '更新失败';
+          console.log(errorMessage);
+          
+          setTimeout(() => errorMessage = '', 5000);
+        }
+      } catch (error) {
+        console.error('更新网站信息失败:', error);
+        errorMessage = '更新失败，请稍后重试';
+        setTimeout(() => errorMessage = '', 5000);
+        return false;
+      }
+    return true; // 立即返回 true 让模态框关闭
   }
 
   // 重置过滤器

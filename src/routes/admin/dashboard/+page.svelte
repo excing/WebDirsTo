@@ -385,11 +385,14 @@
             分类统计
           </h3>
           <div class="space-y-3">
-            {#each Object.entries($stats.categoryCounts) as [category, count]}
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-600 dark:text-gray-400">{category}</span>
-                <span class="text-sm font-medium text-gray-900 dark:text-white">{count}</span>
-              </div>
+            {#each Object.entries($stats.categoryCounts) as [category, count], i}
+              <!-- 只显示前3个分类 -->
+               {#if i < 3}
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">{category}</span>
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{count}</span>
+                </div>
+               {/if}
             {/each}
             {#if Object.keys($stats.categoryCounts).length === 0}
               <p class="text-sm text-gray-500 dark:text-gray-400">暂无数据</p>
