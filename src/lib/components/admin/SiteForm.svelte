@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Site } from '$lib/types';
-	import { API } from '$lib/client/api';
+	import type { Site } from "$lib/types";
+	import { API } from "$lib/client/api";
 
 	interface Props {
 		site?: Site | null;
@@ -15,58 +15,49 @@
 		categories = [],
 		onSave,
 		onCancel,
-		isEditing = false
+		isEditing = false,
 	}: Props = $props();
 
 	// 表单数据
 	let formData = $state({
-		url: site?.url || '',
-		title: site?.title || '',
-		description: site?.description || '',
-		category: site?.category || '',
-		language: site?.language || 'zh-CN',
-		ageRating: site?.ageRating || 'SFW',
-		recommendation: site?.recommendation || 'None',
-		tags: site?.tags?.join(', ') || '',
+		url: site?.url || "",
+		title: site?.title || "",
+		description: site?.description || "",
+		category: site?.category || "",
+		language: site?.language || "zh-CN",
+		ageRating: site?.ageRating || "SFW",
+		recommendation: site?.recommendation || "",
+		tags: site?.tags?.join(", ") || "",
 		starred: site?.starred || false,
 		supportsHTTPS: site?.supportsHTTPS || false,
 		supportsPWA: site?.supportsPWA || false,
-		favicon: site?.favicon || ''
+		favicon: site?.favicon || "",
 	});
 
 	// 表单状态
 	let isSubmitting = $state(false);
 	let isAnalyzing = $state(false);
 	let errors = $state<Record<string, string>>({});
-	let successMessage = $state('');
+	let successMessage = $state("");
 
 	// 语言选项
 	const languageOptions = [
-		{ value: 'zh-CN', label: '简体中文' },
-		{ value: 'zh-TW', label: '繁体中文' },
-		{ value: 'en', label: 'English' },
-		{ value: 'ja', label: '日本語' },
-		{ value: 'ko', label: '한국어' },
-		{ value: 'fr', label: 'Français' },
-		{ value: 'de', label: 'Deutsch' },
-		{ value: 'es', label: 'Español' },
-		{ value: 'pt', label: 'Português' },
-		{ value: 'ru', label: 'Русский' }
+		{ value: "zh-CN", label: "简体中文" },
+		{ value: "zh-TW", label: "繁体中文" },
+		{ value: "en", label: "English" },
+		{ value: "ja", label: "日本語" },
+		{ value: "ko", label: "한국어" },
+		{ value: "fr", label: "Français" },
+		{ value: "de", label: "Deutsch" },
+		{ value: "es", label: "Español" },
+		{ value: "pt", label: "Português" },
+		{ value: "ru", label: "Русский" },
 	];
 
 	// 年龄分级选项
 	const ageRatingOptions = [
-		{ value: 'SFW', label: '全年龄' },
-		{ value: '18+', label: '18岁以上' }
-	];
-
-	// 推荐级别选项
-	const recommendationOptions = [
-		{ value: 'None', label: '无' },
-		{ value: 'Bronze', label: '铜牌推荐' },
-		{ value: 'Silver', label: '银牌推荐' },
-		{ value: 'Gold', label: '金牌推荐' },
-		{ value: 'Platinum', label: '白金推荐' }
+		{ value: "SFW", label: "全年龄" },
+		{ value: "18+", label: "18岁以上" },
 	];
 
 	// 验证表单
@@ -74,17 +65,17 @@
 		errors = {};
 
 		if (!formData.url.trim()) {
-			errors.url = '网站URL不能为空';
+			errors.url = "网站URL不能为空";
 		} else if (!isValidUrl(formData.url)) {
-			errors.url = '请输入有效的URL';
+			errors.url = "请输入有效的URL";
 		}
 
 		if (!formData.title.trim()) {
-			errors.title = '网站标题不能为空';
+			errors.title = "网站标题不能为空";
 		}
 
 		if (!formData.category.trim()) {
-			errors.category = '请选择或输入分类';
+			errors.category = "请选择或输入分类";
 		}
 
 		return Object.keys(errors).length === 0;
@@ -103,7 +94,7 @@
 	// 自动分析网站
 	async function analyzeSite() {
 		if (!formData.url.trim() || !isValidUrl(formData.url)) {
-			errors.url = '请先输入有效的URL';
+			errors.url = "请先输入有效的URL";
 			return;
 		}
 
@@ -112,7 +103,7 @@
 
 		try {
 			const result = await API.analyzeSite(formData.url);
-			
+
 			// 自动填充分析结果
 			if (result.title && !formData.title.trim()) {
 				formData.title = result.title;
@@ -129,23 +120,30 @@
 			if (result.ageRating) {
 				formData.ageRating = result.ageRating;
 			}
-			if (result.tags && result.tags.length > 0 && !formData.tags.trim()) {
-				formData.tags = result.tags.join(', ');
+			if (
+				result.tags &&
+				result.tags.length > 0 &&
+				!formData.tags.trim()
+			) {
+				formData.tags = result.tags.join(", ");
 			}
 			if (result.favicon) {
 				formData.favicon = result.favicon;
 			}
-			if (typeof result.supportsHTTPS === 'boolean') {
+			if (typeof result.supportsHTTPS === "boolean") {
 				formData.supportsHTTPS = result.supportsHTTPS;
 			}
-			if (typeof result.supportsPWA === 'boolean') {
+			if (typeof result.supportsPWA === "boolean") {
 				formData.supportsPWA = result.supportsPWA;
 			}
 
-			successMessage = '网站分析完成，已自动填充相关信息';
-			setTimeout(() => successMessage = '', 3000);
+			successMessage = "网站分析完成，已自动填充相关信息";
+			setTimeout(() => (successMessage = ""), 3000);
 		} catch (error) {
-			errors.analyze = error instanceof Error ? error.message : '分析失败，请手动填写信息';
+			errors.analyze =
+				error instanceof Error
+					? error.message
+					: "分析失败，请手动填写信息";
 		} finally {
 			isAnalyzing = false;
 		}
@@ -166,15 +164,18 @@
 				description: formData.description.trim(),
 				category: formData.category.trim(),
 				language: formData.language,
-				ageRating: formData.ageRating as 'SFW' | '18+',
+				ageRating: formData.ageRating as "SFW" | "18+",
 				recommendation: formData.recommendation,
-				tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0),
+				tags: formData.tags
+					.split(",")
+					.map((tag) => tag.trim())
+					.filter((tag) => tag.length > 0),
 				starred: formData.starred,
 				supportsHTTPS: formData.supportsHTTPS,
 				supportsPWA: formData.supportsPWA,
 				favicon: formData.favicon.trim(),
 				createdAt: site?.createdAt || new Date().toISOString(),
-				ogImage: site?.ogImage || ''
+				ogImage: site?.ogImage || "",
 			};
 
 			const success = await onSave?.(siteData);
@@ -185,7 +186,8 @@
 				}
 			}
 		} catch (error) {
-			errors.submit = error instanceof Error ? error.message : '保存失败，请重试';
+			errors.submit =
+				error instanceof Error ? error.message : "保存失败，请重试";
 		} finally {
 			isSubmitting = false;
 		}
@@ -194,21 +196,21 @@
 	// 重置表单
 	function resetForm() {
 		formData = {
-			url: '',
-			title: '',
-			description: '',
-			category: '',
-			language: 'zh-CN',
-			ageRating: 'SFW',
-			recommendation: 'None',
-			tags: '',
+			url: "",
+			title: "",
+			description: "",
+			category: "",
+			language: "zh-CN",
+			ageRating: "SFW",
+			recommendation: "None",
+			tags: "",
 			starred: false,
 			supportsHTTPS: false,
 			supportsPWA: false,
-			favicon: ''
+			favicon: "",
 		};
 		errors = {};
-		successMessage = '';
+		successMessage = "";
 	}
 
 	// 取消操作
@@ -220,8 +222,10 @@
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
 	<div class="px-4 py-4 sm:px-6 sm:py-5">
 		<div class="flex justify-between items-center mb-6">
-			<h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-				{isEditing ? '编辑网站' : '添加网站'}
+			<h3
+				class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+			>
+				{isEditing ? "编辑网站" : "添加网站"}
 			</h3>
 			{#if isEditing}
 				<button
@@ -235,14 +239,20 @@
 
 		<!-- 成功消息 -->
 		{#if successMessage}
-			<div class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
-				<p class="text-sm text-green-800 dark:text-green-200">{successMessage}</p>
+			<div
+				class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3"
+			>
+				<p class="text-sm text-green-800 dark:text-green-200">
+					{successMessage}
+				</p>
 			</div>
 		{/if}
 
 		<!-- 表单错误 -->
 		{#if errors.submit || errors.analyze}
-			<div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+			<div
+				class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3"
+			>
 				<p class="text-sm text-red-800 dark:text-red-200">
 					{errors.submit || errors.analyze}
 				</p>
@@ -252,7 +262,10 @@
 		<form onsubmit={handleSubmit} class="space-y-6">
 			<!-- URL和分析 -->
 			<div>
-				<label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+				<label
+					for="url"
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+				>
 					网站URL *
 				</label>
 				<div class="flex space-x-2">
@@ -261,7 +274,9 @@
 						id="url"
 						bind:value={formData.url}
 						placeholder="https://example.com"
-						class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.url ? 'border-red-500' : ''}"
+						class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.url
+							? 'border-red-500'
+							: ''}"
 						required
 					/>
 					<button
@@ -271,20 +286,42 @@
 						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{#if isAnalyzing}
-							<svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+							<svg
+								class="w-4 h-4 mr-2 animate-spin"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+								></path>
 							</svg>
 							分析中
 						{:else}
-							<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+							<svg
+								class="w-4 h-4 mr-2"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+								></path>
 							</svg>
 							分析
 						{/if}
 					</button>
 				</div>
 				{#if errors.url}
-					<p class="mt-1 text-sm text-red-600 dark:text-red-400">{errors.url}</p>
+					<p class="mt-1 text-sm text-red-600 dark:text-red-400">
+						{errors.url}
+					</p>
 				{/if}
 			</div>
 
@@ -292,7 +329,10 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<!-- 标题 -->
 				<div>
-					<label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+					<label
+						for="title"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+					>
 						网站标题 *
 					</label>
 					<input
@@ -300,17 +340,24 @@
 						id="title"
 						bind:value={formData.title}
 						placeholder="网站标题"
-						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.title ? 'border-red-500' : ''}"
+						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.title
+							? 'border-red-500'
+							: ''}"
 						required
 					/>
 					{#if errors.title}
-						<p class="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title}</p>
+						<p class="mt-1 text-sm text-red-600 dark:text-red-400">
+							{errors.title}
+						</p>
 					{/if}
 				</div>
 
 				<!-- 分类 -->
 				<div>
-					<label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+					<label
+						for="category"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+					>
 						分类 *
 					</label>
 					<input
@@ -319,7 +366,9 @@
 						bind:value={formData.category}
 						list="categories"
 						placeholder="选择或输入分类"
-						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.category ? 'border-red-500' : ''}"
+						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {errors.category
+							? 'border-red-500'
+							: ''}"
 						required
 					/>
 					<datalist id="categories">
@@ -328,14 +377,19 @@
 						{/each}
 					</datalist>
 					{#if errors.category}
-						<p class="mt-1 text-sm text-red-600 dark:text-red-400">{errors.category}</p>
+						<p class="mt-1 text-sm text-red-600 dark:text-red-400">
+							{errors.category}
+						</p>
 					{/if}
 				</div>
 			</div>
 
 			<!-- 描述 -->
 			<div>
-				<label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+				<label
+					for="description"
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+				>
 					网站描述
 				</label>
 				<textarea
@@ -351,7 +405,10 @@
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<!-- 语言 -->
 				<div>
-					<label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+					<label
+						for="language"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+					>
 						语言
 					</label>
 					<select
@@ -367,7 +424,10 @@
 
 				<!-- 年龄分级 -->
 				<div>
-					<label for="ageRating" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+					<label
+						for="ageRating"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+					>
 						年龄分级
 					</label>
 					<select
@@ -380,27 +440,14 @@
 						{/each}
 					</select>
 				</div>
-
-				<!-- 推荐级别 -->
-				<div>
-					<label for="recommendation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-						推荐级别
-					</label>
-					<select
-						id="recommendation"
-						bind:value={formData.recommendation}
-						class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-					>
-						{#each recommendationOptions as option}
-							<option value={option.value}>{option.label}</option>
-						{/each}
-					</select>
-				</div>
 			</div>
 
 			<!-- 标签 -->
 			<div>
-				<label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+				<label
+					for="tags"
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+				>
 					标签
 				</label>
 				<input
@@ -417,7 +464,10 @@
 
 			<!-- 图标URL -->
 			<div>
-				<label for="favicon" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+				<label
+					for="favicon"
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+				>
 					网站图标URL
 				</label>
 				<input
@@ -429,9 +479,26 @@
 				/>
 			</div>
 
+			<!-- 推荐级别 -->
+			<div>
+				<label
+					for="recommendation"
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+				>
+					推荐级别
+				</label>
+				<textarea
+					id="recommendation"
+					bind:value={formData.recommendation}
+					placeholder="推荐语"
+					class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+				></textarea>
+			</div>
 			<!-- 特性选项 -->
 			<div>
-				<div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+				<div
+					class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+				>
 					网站特性
 				</div>
 				<div class="space-y-3">
@@ -441,7 +508,10 @@
 							bind:checked={formData.supportsHTTPS}
 							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
 						/>
-						<span class="ml-2 text-sm text-gray-700 dark:text-gray-300">支持HTTPS</span>
+						<span
+							class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+							>支持HTTPS</span
+						>
 					</label>
 					<label class="flex items-center">
 						<input
@@ -449,7 +519,10 @@
 							bind:checked={formData.supportsPWA}
 							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
 						/>
-						<span class="ml-2 text-sm text-gray-700 dark:text-gray-300">支持PWA</span>
+						<span
+							class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+							>支持PWA</span
+						>
 					</label>
 					<label class="flex items-center">
 						<input
@@ -457,13 +530,18 @@
 							bind:checked={formData.starred}
 							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
 						/>
-						<span class="ml-2 text-sm text-gray-700 dark:text-gray-300">设为置顶</span>
+						<span
+							class="ml-2 text-sm text-gray-700 dark:text-gray-300"
+							>设为置顶</span
+						>
 					</label>
 				</div>
 			</div>
 
 			<!-- 提交按钮 -->
-			<div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+			<div
+				class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700"
+			>
 				{#if !isEditing}
 					<button
 						type="button"
@@ -480,12 +558,22 @@
 					class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{#if isSubmitting}
-						<svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+						<svg
+							class="w-4 h-4 mr-2 animate-spin"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+							></path>
 						</svg>
-						{isEditing ? '保存中' : '添加中'}
+						{isEditing ? "保存中" : "添加中"}
 					{:else}
-						{isEditing ? '保存网站' : '添加网站'}
+						{isEditing ? "保存网站" : "添加网站"}
 					{/if}
 				</button>
 			</div>
